@@ -19,9 +19,9 @@ test("quantidade nao excede estoque e produto sem estoque nao entra",() => {
   assert.equal(cartReducer(c,{type:"qty",id:1,delta:1})[1].qty,1);
   assert.deepEqual(cartReducer({}, {type:"add",id:2,stock:0}),{});
 });
-test("precos demonstrativos: PIX normal, boleto expresso e cartao",() => {
-  assert.deepEqual(calcularTotais(100,"normal","pix"),{frete:15.9,desconto:10,total:105.9});
-  assert.deepEqual(calcularTotais(100,"expresso","boleto"),{frete:29.9,desconto:7,total:122.9});
-  assert.deepEqual(calcularTotais(100,"normal","credito"),{frete:15.9,desconto:0,total:115.9});
-  assert.equal(calcularTotais(19.99,"normal","pix").desconto,2);
+test("total usa a cotacao devolvida pela API e o desconto da modalidade",() => {
+  assert.deepEqual(calcularTotais(100,14.9,"pix"),{frete:14.9,desconto:10,total:104.9});
+  assert.deepEqual(calcularTotais(100,53.69,"boleto"),{frete:53.69,desconto:7,total:146.69});
+  assert.deepEqual(calcularTotais(100,14.9,"credito"),{frete:14.9,desconto:0,total:114.9});
+  assert.equal(calcularTotais(19.99,14.9,"pix").desconto,2);
 });

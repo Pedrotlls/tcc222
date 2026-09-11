@@ -48,7 +48,8 @@ class CommerceTests {
     @Test void pedidoIdempotenteComPrecoDoServidorECancelamento() throws Exception {
         var result=mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf())
             .contentType("application/json").content(pedido(1,"pedido-0001")))
-            .andExpect(status().isCreated()).andExpect(jsonPath("$.total").value(105.90))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.frete").value(14.90))
+            .andExpect(jsonPath("$.total").value(104.90))
             .andExpect(jsonPath("$.status").value("RECEBIDO")).andReturn();
         long id=json.readTree(result.getResponse().getContentAsString()).get("id").asLong();
         mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf())
@@ -95,5 +96,17 @@ class CommerceTests {
             .contentType("application/json").content("{\"status\":\"ENTREGUE\"}")).andExpect(status().isBadRequest());
         mvc.perform(patch("/admin/pedidos/"+id+"/status").with(user("admin").roles("ADMIN")).with(csrf())
             .contentType("application/json").content("{\"status\":\"SEPARANDO\"}")).andExpect(status().isOk());
+    }
+    @Test void cotacaoVariaPorRegiaoQuantidadeModalidadeEValor() throws Exception {
+        String sp="{\"itens\":[{\"produtoId\":"+produtoId+",\"quantidade\":1}],\"uf\":\"SP\",\"entrega\":\"normal\"}";
+        mvc.perform(post("/frete/cotacao").with(user("cliente@teste.local")).with(csrf())
+            .contentType("application/json").content(sp))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.valor").value(14.90))
+            .andExpect(jsonPath("$.regiao").value("Sao Paulo"));
+        String norte="{\"itens\":[{\"produtoId\":"+produtoId+",\"quantidade\":2}],\"uf\":\"PA\",\"entrega\":\"expresso\"}";
+        mvc.perform(post("/frete/cotacao").with(user("cliente@teste.local")).with(csrf())
+            .contentType("application/json").content(norte))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.valor").value(79.26))
+            .andExpect(jsonPath("$.prazoMin").value(4));
     }
 }

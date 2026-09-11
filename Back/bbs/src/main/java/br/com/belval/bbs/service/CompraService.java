@@ -14,9 +14,10 @@ import java.util.*;
 public class CompraService {
     private final CompraRepository compras;
     private final UsuarioRepository usuarios;
+    private final FreteService fretes;
     @PersistenceContext private EntityManager em;
-    public CompraService(CompraRepository compras, UsuarioRepository usuarios) {
-        this.compras=compras; this.usuarios=usuarios;
+    public CompraService(CompraRepository compras, UsuarioRepository usuarios, FreteService fretes) {
+        this.compras=compras; this.usuarios=usuarios; this.fretes=fretes;
     }
     public record Linha(Integer produtoId, Integer quantidade) {}
     public record Endereco(String cep,String rua,String numero,String complemento,String bairro,String cidade,String uf) {}
@@ -73,7 +74,8 @@ public class CompraService {
             c.subtotal=c.subtotal.add(p.getPreco().multiply(BigDecimal.valueOf(qtd)));
             p.setEstoque(p.getEstoque()-qtd);
         }
-        c.frete=new BigDecimal(pedido.entrega().equals("expresso")?"29.90":"15.90");
+        int quantidadeTotal=c.itens.stream().mapToInt(item -> item.quantidade).sum();
+        c.frete=fretes.calcular(c.subtotal,quantidadeTotal,e.uf(),pedido.entrega()).valor();
         BigDecimal taxa=new BigDecimal(pedido.pagamento().equals("pix")?"0.10":pedido.pagamento().equals("boleto")?"0.07":"0");
         c.desconto=c.subtotal.multiply(taxa).setScale(2,RoundingMode.HALF_UP);
         c.total=c.subtotal.add(c.frete).subtract(c.desconto).setScale(2,RoundingMode.HALF_UP);

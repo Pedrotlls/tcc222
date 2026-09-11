@@ -53,6 +53,8 @@ npm run dev
 Abra http://localhost:5173. Mantenha o Spring Tools executando a API.
 Use Node 22.12+ da linha 22.
 Entre como administrador usando o e-mail e a senha que você configurou.
+No checkout, o ViaCEP preenche cidade/UF e a API calcula uma estimativa regional.
+Não é necessário alterar as tabelas para essa regra.
 
 ## 4. Erros comuns
 

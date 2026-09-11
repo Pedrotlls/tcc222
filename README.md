@@ -37,7 +37,8 @@ A pasta Front/SLA e Front/bbs-react/legacy são versões anteriores, não execut
 - Checkout integrado: pedidos e itens persistidos, histórico individual e painel administrativo.
 - Preços, usuário, desconto, frete e total calculados no servidor.
 - PIX simulado: 10% de desconto; boleto: 7%; crédito/débito: sem desconto.
-- Frete demonstrativo normal R$ 15,90 e expresso R$ 29,90.
+- Cotação acadêmica de frete por UF/região, quantidade de itens, valor do carrinho e modalidade.
+- Frete normal grátis a partir de R$ 3.500; entrega expressa custa mais e reduz o prazo estimado.
 - Confirmação idempotente, transações e bloqueios para controlar estoque.
 - Cancelamento com estorno de estoque; acompanhamento de status.
 - Consulta opcional ao ViaCEP e preenchimento manual quando indisponível.
@@ -64,7 +65,7 @@ Publicar apenas dist não publica a API Java. Hospedagem externa requer backend,
 
 ## Limites
 
-- Não é um e-commerce comercial: não integra gateway, envio de e-mail, recuperação por e-mail, transportadora ou emissão fiscal.
+- Não é um e-commerce comercial: a cotação não vem de transportadora e o projeto não integra gateway, envio de e-mail, recuperação por e-mail ou emissão fiscal.
 - Use dados fictícios. O cadastro não verifica a propriedade do e-mail.
 - Alterar a senha não revoga automaticamente sessões em outros dispositivos.
 - Uso público requer revisão de segurança, rate limiting, confirmação de e-mail, recuperação segura, revogação de sessões, HTTPS e backups.

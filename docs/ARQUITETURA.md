@@ -17,7 +17,8 @@ O backend serve as imagens gravadas em disco. Não precisa usar a pasta Front/SL
 | AdminPage | CRUD e imagens de produtos |
 | api.js | Cookies, CSRF, respostas e erros |
 | SecurityConfig / AuthController | Identidade, sessão, senha BCrypt e autorização |
-| CompraService | Regra de preço/frete, idempotência, locks, baixa e estorno de estoque |
+| FreteService | Estimativa por região, quantidade, valor e modalidade |
+| CompraService | Preço final, idempotência, locks, baixa e estorno de estoque |
 | ProdutoController | CRUD, validação, arquivos e proteção de exclusão de histórico |
 | ApiErrors | Erros controlados sem SQL/stacktrace |
 
@@ -55,6 +56,7 @@ Prefixo visto pelo navegador: /api. Na API Java, não há esse prefixo.
 | POST | /produtos/com-imagem | Administrador + CSRF: criar com arquivo |
 | PUT | /produtos/{id}/com-imagem | Administrador + CSRF: editar com arquivo |
 | GET | /imagens/{arquivo} | Imagem pública |
+| POST | /frete/cotacao | Cliente autenticado: estima valor e prazo a partir dos itens, UF e modalidade |
 | GET | /pedidos | Apenas pedidos do usuário atual |
 | POST | /pedidos | Autenticado + CSRF: registrar compra |
 | PATCH | /pedidos/{id}/cancelar | Dono + CSRF: cancelar RECEBIDO |
@@ -87,3 +89,20 @@ RECEBIDO → SEPARANDO → ENVIADO → ENTREGUE.
 RECEBIDO e SEPARANDO podem ir para CANCELADO pelo administrador.
 O dono só pode cancelar RECEBIDO. Estados finais não retornam.
 Repetir o estado atual não causa nova baixa ou novo estorno.
+
+## Regra acadêmica de frete
+
+| Destino | Base normal | Prazo-base |
+| --- | ---: | ---: |
+| SP | R$ 14,90 | 2 dias úteis |
+| Demais estados do Sudeste | R$ 19,90 | 3 dias úteis |
+| Sul | R$ 24,90 | 4 dias úteis |
+| Centro-Oeste | R$ 28,90 | 5 dias úteis |
+| Nordeste | R$ 34,90 | 7 dias úteis |
+| Norte | R$ 42,90 | 9 dias úteis |
+
+Acrescenta R$ 1,50 por unidade além da primeira. No normal, compras a partir de
+R$ 3.500 têm frete grátis. O expresso aplica 1,65 sobre base + quantidade,
+acrescenta R$ 6 e reduz o prazo. A API calcula novamente no fechamento do
+pedido para que o navegador não determine o valor. É uma estimativa do TCC,
+sem peso, dimensões, distância exata ou contrato com transportadora.

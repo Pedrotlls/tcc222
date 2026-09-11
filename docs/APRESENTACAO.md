@@ -14,7 +14,7 @@
 1. Problema: organizar o processo de catálogo, compra e gestão de estoque de uma loja de hardware.
 2. Tecnologias: React para interface, Spring Boot para regras, JPA para persistência.
 3. Cliente: pesquisa, filtro, detalhes, cadastro e carrinho.
-4. Compra: endereço e modalidade simulada; a API calcula tudo e gera o pedido.
+4. Compra: endereço e modalidade; a API estima frete por região, quantidade e valor, calcula tudo e gera o pedido.
 5. Administrador: produto com imagem, estoque, pedidos, indicadores e lista de clientes.
 6. Segurança: usuário comum não altera produtos; cliente não acessa pedidos alheios.
 7. Integridade: compra reduz estoque; cancelamento repõe; duplo clique não duplica.
@@ -27,6 +27,8 @@
 - [ ] Atualizar um produto reflete no catálogo ao voltar.
 - [ ] Carrinho permanece após recarregar a página.
 - [ ] Endereço pode ser digitado quando ViaCEP está indisponível.
+- [ ] Cotação muda entre SP e outra região, e entre normal e expresso.
+- [ ] Compra normal de R$ 3.500 ou mais mostra frete grátis.
 - [ ] API fora do ar não limpa o carrinho nem mostra compra concluída.
 - [ ] Pedido aparece para seu dono, não para outro cliente.
 - [ ] Cancelar duas vezes não duplica a reposição.
