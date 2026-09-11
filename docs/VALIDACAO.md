@@ -1,18 +1,20 @@
 # Validação da entrega
 
-## Executado no ambiente de edição
+## Resultado confirmado no GitHub
 
-- Frontend: npm test — 5 testes aprovados (carrinho, limites, descontos, CSRF e propagação de erros).
-- Frontend: npm run lint — aprovado.
-- Frontend: npm run build — aprovado.
-- Testes de navegador/visuais não foram executados; não presumir aprovação do roteiro manual.
+[Execução 34559080415](https://github.com/Pedrotlls/tcc222/actions/runs/34559080415), commit f03ac877eda2df54d1bd0bf0ebb325547f857ab4:
 
-## Backend: pendente de execução
+- Frontend: npm ci, 5 testes, lint e build aprovados.
+- Backend: compilação e testes Maven aprovados com JDK 17 e banco H2 em memória.
+- Os testes de integração cobrem autorização, CSRF, preço calculado no servidor, idempotência, estoque, cancelamento, isolamento entre clientes, login/sessão e transições de status.
 
-O Maven não conseguiu baixar o parent Spring Boot 3.3.5: resolução de DNS de repo.maven.apache.org indisponível no ambiente. Portanto, a compilação e os testes de integração Java **não estão confirmados localmente**.
+O frontend também passou localmente. O Maven local havia sido bloqueado pela resolução de DNS de repo.maven.apache.org; a execução no GitHub resolveu essa pendência de compilação/testes Java.
 
-CommerceTests inclui cenários de autorização, CSRF, preço calculado no servidor, idempotência, estoque insuficiente, cancelamento, isolamento entre clientes, login/sessão e transições de status.
-BbsApplicationTests valida inicialização do contexto em H2 de teste.
-O workflow Validacao BBS executa testes Java e frontend no GitHub. Confira o resultado na aba Checks do PR antes de integrar à main; a presença do arquivo de workflow não significa que ele já passou.
+## Pendências do laboratório
 
-Não colocar o projeto em uso comercial. As limitações estão no README.
+- Executar database/01_criar_banco.sql no SQL Server real.
+- Configurar a API no Spring Tools e confirmar validação do esquema SQL Server.
+- Testar compra, cancelamento e persistência depois de reiniciar a API.
+- Executar o roteiro manual de docs/APRESENTACAO.md em desktop e celular.
+
+Os testes H2 não comprovam o funcionamento do driver, esquema, autenticação ou comportamento concorrente no SQL Server. Testes de navegador/visuais não foram executados. Não colocar o projeto em uso comercial; as limitações estão no README.

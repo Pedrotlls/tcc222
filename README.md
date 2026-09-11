@@ -71,6 +71,6 @@ Publicar apenas dist não publica a API Java. Hospedagem externa requer backend,
 - Os scripts SQL são de criação inicial. Não migram tabelas existentes.
 - Uma senha de banco foi removida da configuração, mas ainda existe no histórico Git anterior. Troque-a se estiver em uso. O histórico não foi reescrito.
 - Algumas imagens dependem de sites externos; a interface exibe fallback se falharem.
-- A compilação/testes locais do backend ficaram bloqueados pelo download Maven; os scripts ainda precisam ser executados num SQL Server real. Consulte a validação e os Checks do PR.
+- Frontend e backend passaram na validação automática do GitHub (Java testado em H2). Os scripts ainda precisam ser executados num SQL Server real. Consulte a validação e os Checks do PR.
 
 Documentos: [arquitetura e endpoints](docs/ARQUITETURA.md), [apresentação](docs/APRESENTACAO.md), [validação](docs/VALIDACAO.md).
