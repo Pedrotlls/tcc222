@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { request } from "../services/api";
 import {
   listarProdutos,
   criarProduto,
@@ -35,7 +36,7 @@ const FORM_VAZIO = {
 const fmt = v =>
   Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export default function AdminPage({ fechar }) {
+export default function AdminPage({ fechar, onProdutoSalvo }) {
   // AdminPage: UI/Fluxo de CRUD de produtos
   // - Carrega lista no montar (listarProdutos)
   // - Permite criar/editar com ou sem upload de imagem
@@ -72,6 +73,8 @@ export default function AdminPage({ fechar }) {
   //
   const [produtos, setProdutos]           = useState([]);
 
+  const [saving, setSaving] = useState(false);
+  const savingLock = useRef(false);
   const [loading, setLoading]             = useState(true);
   const [erro, setErro]                   = useState("");
   const [sucesso, setSucesso]             = useState("");
@@ -91,6 +94,7 @@ export default function AdminPage({ fechar }) {
   const inputFileRef = useRef(null);
 
   useEffect(() => { carregar(); }, []);
+  useEffect(() => () => { if (imagemPreview.startsWith("blob:")) URL.revokeObjectURL(imagemPreview); }, [imagemPreview]);
 
   async function carregar() {
     setLoading(true);
@@ -188,7 +192,10 @@ export default function AdminPage({ fechar }) {
 
   async function salvar() {
     if (!form.nome.trim()) { setErro("O campo Nome é obrigatório."); return; }
-    if (!form.preco || isNaN(Number(form.preco))) { setErro("Informe um Preço válido."); return; }
+    if (!form.preco || !Number.isFinite(Number(form.preco)) || Number(form.preco) <= 0) { setErro("Informe um preço positivo."); return; }
+    if (!Number.isInteger(Number(form.estoque)) || Number(form.estoque) < 0) {setErro("Estoque deve ser um inteiro não negativo.");return;}
+    if (savingLock.current) return;
+    savingLock.current = true; setSaving(true);
 
     try {
       if (editandoId) {
@@ -227,10 +234,11 @@ export default function AdminPage({ fechar }) {
         flash("✅ Produto criado com sucesso!");
       }
       fecharModal();
+      onProdutoSalvo?.();
       carregar();
     } catch (e) {
       setErro(e.message);
-    }
+    } finally { savingLock.current = false; setSaving(false); }
   }
 
   async function confirmarDeletar(id) {
@@ -238,6 +246,7 @@ export default function AdminPage({ fechar }) {
       await deletarProduto(id);
       setConfirmDelete(null);
       flash("🗑️ Produto removido.");
+      onProdutoSalvo?.();
       carregar();
     } catch (e) {
       setErro(e.message);
@@ -251,6 +260,7 @@ export default function AdminPage({ fechar }) {
       setProdutos(prev =>
         prev.map(p => p.id === produto.id ? { ...p, ativo: atualizado.ativo } : p)
       );
+      onProdutoSalvo?.();
       flash(atualizado.ativo ? "✅ Produto ativado!" : "⚠️ Produto desativado!");
     } catch (e) {
       setErro(e.message);
@@ -550,7 +560,7 @@ export default function AdminPage({ fechar }) {
 
               <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
                 <button style={S.btnSecondary} onClick={fecharModal}>Cancelar</button>
-                <button style={S.btnPrimary} onClick={salvar}>
+                <button style={S.btnPrimary} onClick={salvar} disabled={saving}>
                   {editandoId ? "Salvar Alterações" : "Criar Produto"}
                 </button>
               </div>
@@ -810,10 +820,8 @@ const S = {
   formGrid:     { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 20px", marginBottom: 24 },
   field:        { marginBottom: 0 },
   label:        { display: "block", fontSize: ".68rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", color: "#ffffffff", marginBottom: 7 },
-  input:        { width: "100%", padding: "12px 14px", background: "rgba(255, 255, 255, 0.99)", border: "1px solid rgba(136, 38, 38, 0.1)", borderRadius: 10, color: "#000000ff", fontFamily: "'Poppins',sans-serif", fontSize: ".9rem", outline: "none", boxSizing: "border-box" },
-  btnPrimary:   { flex: 1, padding: "13px 24px", background: "linear-gradient(45deg,#ff416c,#ff4b2b)", border: "none", borderRadius: 10, color: "#9c3131ff", fontFamily: "  'Poppins',sans-serif", fontSize: ".9rem", fontWeight: 700, cursor: "pointer" },
   input:        { width: "100%", padding: "12px 14px", background: "rgba(49, 41, 41, 0.99)", border: "1px solid rgba(255, 0, 0, 0.1)", borderRadius: 10, color: "#ffffffff", fontFamily: "'Poppins',sans-serif", fontSize: ".9rem", outline: "none", boxSizing: "border-box" },
-  btnPrimary:   { flex: 1, padding: "13px 24px", background: "linear-gradient(45deg,#ff416c,#ff4b2b)", border: "none", borderRadius: 10, color: "#9c3131ff", fontFamily: "'Poppins',sans-serif", fontSize: ".9rem", fontWeight: 700, cursor: "pointer" },
+  btnPrimary:   { flex: 1, padding: "13px 24px", background: "linear-gradient(45deg,#ff416c,#ff4b2b)", border: "none", borderRadius: 10, color: "#ffffff", fontFamily: "'Poppins',sans-serif", fontSize: ".9rem", fontWeight: 700, cursor: "pointer" },
   btnSecondary: { padding: "13px 24px", background: "transparent", border: "1px solid rgba(255,255,255,.12)", borderRadius: 10, color: "#888", fontFamily: "'Poppins',sans-serif", fontSize: ".9rem", cursor: "pointer" },
   alertErr:     { background: "rgba(255,65,108,.1)", border: "1px solid rgba(255,65,108,.3)", color: "#ff8fa0", padding: "12px 16px", borderRadius: 10, fontSize: ".85rem", marginBottom: 16 },
 };
@@ -834,13 +842,12 @@ async function criarProdutoComImagem(form, arquivo) {
   fd.append("tipo",      form.tipo);
   fd.append("ativo",     form.ativo);
 
-  const res = await fetch("http://localhost:8080/produtos/com-imagem", {
+  return request("/produtos/com-imagem", {
     method: "POST",
     // NÃO define Content-Type → o browser define automaticamente com boundary
     body: fd,
   });
-  if (!res.ok) throw new Error("Erro ao criar produto com imagem");
-  return res.json();
+
 }
 
 async function atualizarProdutoComImagem(id, form, arquivo) {
@@ -853,10 +860,9 @@ async function atualizarProdutoComImagem(id, form, arquivo) {
   fd.append("tipo",      form.tipo);
   fd.append("ativo",     form.ativo);
 
-  const res = await fetch(`http://localhost:8080/produtos/${id}/com-imagem`, {
+  return request(`/produtos/${id}/com-imagem`, {
     method: "PUT",
     body: fd,
   });
-  if (!res.ok) throw new Error("Erro ao atualizar produto com imagem");
-  return res.json();
+
 }

@@ -32,3 +32,11 @@ build/
 ### VS Code ###
 .vscode/
 /.metadata/
+**/.metadata/
+**/node_modules/
+**/dist/
+**/data/
+**/uploads/
+.env
+.env.local
+.sites-runtime/
