@@ -1,85 +1,43 @@
-// ============================================================
-//  App.jsx  —  Componente raiz da aplicação
-//  É o "gerente geral": decide quais telas/modais aparecem
-//  e repassa funções para os filhos abrirem umas às outras.
-// ============================================================
-
-import { useState } from "react";
-
-// Observação: comentários do projeto
-// - App.jsx é o componente raiz (root) do React.
-// - Ele coordena a abertura/fechamento de telas (Checkout e Admin)
-//   e dispara recarregamento do catálogo quando Admin salva produtos.
+import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import ProductList from "./components/ProductList";
 import Cart from "./components/Cart";
 import AdminPage from "./components/AdminPage";
-import Checkout from "../public/Checkout";
+import Checkout from "./components/Checkout";
+import Account from "./components/Account";
+import { session } from "./services/api";
+import "./commerce.css";
 
-function App() {
-  /*
-   * App.jsx — raiz do React
-   * ------------------------------------------------------------
-   * Pense no App como o “cérebro” que decide:
-   * - qual tela/modaI fica visível agora
-   * - quem ganha props de “abrir/fechar”
-   *
-   * Aqui NÃO acontece regra de negócio (fetch, frete, etc.).
-   * Quem faz isso são os componentes:
-   * - ProductList: busca produtos na API do backend
-   * - Cart: gerencia a sidebar do carrinho e calcula/mostra frete
-   * - Checkout: fluxo de compra (3 etapas)
-   * - AdminPage: CRUD de produtos
-   */
-
-
-  // ── Estados que controlam quais modais/telas estão visíveis ──
-
-  // true → mostra a tela de Checkout sobreposta à página
-
-  const [checkoutAberto, setCheckoutAberto] = useState(false);
-
-
-  // true  → mostra o painel de administração de produtos
-  const [adminAberto, setAdminAberto] = useState(false);
-
-  // Número que aumenta toda vez que um produto é salvo no Admin.
-  // O ProductList observa essa variável e recarrega a lista quando ela muda.
-  const [versaoProdutos, setVersaoProdutos] = useState(0);
-
-  return (
-    <div>
-      {/* Barra superior com logo, nav e botão do carrinho.
-          Recebe abrirAdmin para abrir o painel ao clicar em ⚙️ Admin */}
-      <Header abrirAdmin={() => setAdminAberto(true)} />
-
-      {/* Grade de produtos buscados da API.
-          versao muda → ProductList refaz o fetch e exibe produtos atualizados */}
-      <ProductList versao={versaoProdutos} />
-
-      {/* Sidebar do carrinho (painel lateral direito).
-          abrirCheckout é chamado ao clicar em "Finalizar Pedido" */}
-      <Cart abrirCheckout={() => setCheckoutAberto(true)} />
-
-      {/* Renderiza o Checkout SOMENTE se checkoutAberto for true.
-          Quando o Checkout chama props "fechar", voltamos para false aqui.
-          Isso esconde o modal de Checkout e libera a página principal. */}
-      {checkoutAberto && <Checkout fechar={() => setCheckoutAberto(false)} />}
-
-
-      {/* Renderiza o Admin SOMENTE se adminAberto for true.
-          Quando o Admin salva/cria/atualiza produtos,
-          ele chama onProdutoSalvo → incrementa versaoProdutos.
-          Esse valor muda e força o ProductList a refazer seu GET /produtos/ativos. */}
-
-      {adminAberto && (
-        <AdminPage
-          fechar={() => setAdminAberto(false)}
-          onProdutoSalvo={() => setVersaoProdutos(v => v + 1)}
-        />
-      )}
-    </div>
-  );
+export default function App() {
+  const [usuario, setUsuario] = useState(null);
+  const [screen, setScreen] = useState(null);
+  const [versao, setVersao] = useState(0);
+  const [aviso, setAviso] = useState("");
+  const changed = () => setVersao(v => v + 1);
+  useEffect(() => {
+    let active = true;
+    session().then(data => {if(active) setUsuario(data.usuario);}).catch(() => {if(active) setAviso("API indisponível. Inicie o backend para acessar a loja.");});
+    const expired = () => {setUsuario(null);setScreen("conta");setAviso("Sua sessão expirou. Entre novamente.");};
+    window.addEventListener("bbs-session-expired", expired);
+    return () => {active=false;window.removeEventListener("bbs-session-expired",expired);};
+  }, []);
+  function checkout() {
+    if(!usuario) {setAviso("Entre ou crie uma conta. Seu carrinho será mantido.");setScreen("conta");}
+    else setScreen("checkout");
+  }
+  return <>
+    <Header abrirConta={() => setScreen("conta")} usuario={usuario} />
+    <main id="home">
+      <div className="bbs-intro"><span>Bits Bytes Store</span><h1>Seu próximo upgrade começa aqui.</h1><p>Hardware, periféricos e componentes para montar o seu setup.</p><small>Loja demonstrativa do TCC · Sem vendas ou pagamentos reais</small></div>
+      {aviso && <div className="bbs-notice" role="status">{aviso}<button onClick={() => setAviso("")}>Fechar aviso</button></div>}
+      <ProductList versao={versao} />
+      <section id="sobre" className="bbs-info"><h2>Sobre a BBS</h2><p>A Bits Bytes Store é um projeto acadêmico de e-commerce de hardware, com catálogo, carrinho, gestão de produtos e acompanhamento de pedidos.</p></section>
+      <section id="contato" className="bbs-info"><h2>Atendimento demonstrativo</h2><p>Acompanhe seu pedido e solicite o cancelamento pela área Minha conta. O projeto não possui atendimento comercial, entrega real ou envio de e-mails.</p><button onClick={() => setScreen("conta")}>Abrir minha conta</button></section>
+    </main>
+    <footer className="bbs-info">BBS · Projeto de conclusão de curso · 2026</footer>
+    <Cart abrirCheckout={checkout} />
+    {screen === "conta" && <Account usuario={usuario} onUsuario={u => {setUsuario(u);setAviso("");}} fechar={() => setScreen(null)} abrirProdutos={() => setScreen("admin")} onChange={changed} />}
+    {screen === "checkout" && usuario && <Checkout fechar={() => setScreen(null)} onComplete={changed}/>}
+    {screen === "admin" && usuario?.perfil === "ADMIN" && <AdminPage fechar={() => {changed();setScreen("conta");}} onProdutoSalvo={changed} />}
+  </>;
 }
-
-export default App;

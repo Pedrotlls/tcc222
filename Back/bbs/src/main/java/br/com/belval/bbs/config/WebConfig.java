@@ -39,6 +39,6 @@ public class WebConfig implements WebMvcConfigurer {
         // Mapeia requisições GET /imagens/** para a pasta física em disco
         registry
             .addResourceHandler("/imagens/**")
-            .addResourceLocations("file:" + uploadDir + "/");
+            .addResourceLocations(java.nio.file.Paths.get(uploadDir).toAbsolutePath().normalize().toUri().toString() + "/");
     }
 }

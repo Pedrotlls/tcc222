@@ -147,7 +147,7 @@ export default function Cart({ abrirCheckout }) {
               return (
                 <div key={id} className="cart-item">
                   {/* Miniatura do produto */}
-                  <img src={item.img} alt={item.name} width={60} />
+                  {item.img && <img src={item.img} alt={item.name} width={60} onError={e => {e.currentTarget.style.display="none";}} />}
 
                   {/* Nome e preço */}
                   <div style={{ flex: 1 }}>
@@ -159,11 +159,11 @@ export default function Cart({ abrirCheckout }) {
 
                   {/* Controles de quantidade: -, contador, +, lixeira */}
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <button onClick={() => changeQty(id, -1)}>-</button>
+                    <button aria-label={"Diminuir " + item.name} onClick={() => changeQty(id, -1)}>-</button>
                     <span>{item.qty}</span>
-                    <button onClick={() => changeQty(id, +1)}>+</button>
+                    <button aria-label={"Aumentar " + item.name} disabled={item.qty >= (item.max ?? 99)} onClick={() => changeQty(id, +1)}>+</button>
                     {/* Remove o item inteiro decrementando toda a quantidade */}
-                    <button onClick={() => changeQty(id, -item.qty)}>🗑</button>
+                    <button aria-label={"Remover " + item.name} onClick={() => changeQty(id, -item.qty)}>🗑</button>
                   </div>
                 </div>
               );
@@ -229,7 +229,7 @@ export default function Cart({ abrirCheckout }) {
 
           {/* Linha de frete */}
           <div style={{ display: "flex", justifyContent: "space-between", margin: "10px 0", color: "#bbb" }}>
-            <span>Frete:</span>
+            <span>Frete estimado:</span>
             <span>{freteGlobal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
           </div>
 
@@ -238,7 +238,7 @@ export default function Cart({ abrirCheckout }) {
             display: "flex", justifyContent: "space-between",
             fontWeight: "700", fontSize: "1.4rem", marginBottom: "20px",
           }}>
-            <span>Total:</span>
+            <span>Estimativa:</span>
             <span>{total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
           </div>
 
