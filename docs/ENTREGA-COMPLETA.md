@@ -15,7 +15,7 @@ A atualização também está na branch `codex/bbs-completo`. Com Git, execute `
 | Área | O que demonstrar |
 | --- | --- |
 | Loja | Busca, categoria, ordenação, detalhes, imagens, comparação de até três produtos |
-| Conta | Cadastro, login, saída, edição de nome/senha e favoritos entre dispositivos |
+| Conta | Cadastro, login, saída, edição de nome/senha, endereços salvos e favoritos entre dispositivos |
 | Carrinho | Quantidades, remoção e rascunho mantido no navegador |
 | Checkout | Revisão, endereço, ViaCEP opcional, frete regional, modalidades e descontos demonstrativos |
 | Pedidos | SQL Server, controle de estoque, consulta, cancelamento e histórico de status |
@@ -42,6 +42,7 @@ SELECT id,nome,preco,estoque,ativo FROM dbo.produto;
 SELECT id,usuario_id,status,total,criado_em FROM dbo.bbs_compra;
 SELECT * FROM dbo.bbs_compra_item;
 SELECT * FROM dbo.bbs_favorito;
+SELECT * FROM dbo.bbs_endereco;
 SELECT * FROM dbo.bbs_compra_historico ORDER BY compra_id,ordem;
 ```
 

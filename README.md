@@ -8,7 +8,7 @@ Pedidos, frete e modalidades de pagamento são demonstrativos: não existe cobra
 
 Siga o [guia SQL Server + Spring Tools + VS Code](database/LEIA-ME.md).
 
-1. No SSMS, execute [01_criar_banco.sql](database/01_criar_banco.sql) e depois [03_atualizar_funcionalidades.sql](database/03_atualizar_funcionalidades.sql). Se o banco já funciona, pare a API e execute somente o 03.
+1. No SSMS, execute [01_criar_banco.sql](database/01_criar_banco.sql) e depois [03_atualizar_funcionalidades.sql](database/03_atualizar_funcionalidades.sql) e [04_enderecos_clientes.sql](database/04_enderecos_clientes.sql). Se o banco já funciona, pare a API e execute 03 e 04.
 2. Opcional: execute [02_produtos_exemplo.sql](database/02_produtos_exemplo.sql).
 3. No Spring Tools, importe Back/bbs como Existing Maven Project.
 4. Configure DB_URL, DB_USER, DB_PASSWORD e as credenciais iniciais BBS_ADMIN_EMAIL/BBS_ADMIN_PASSWORD conforme o guia.
@@ -31,6 +31,7 @@ A pasta Front/SLA e Front/bbs-react/legacy são versões anteriores, não execut
 - Catálogo vindo da API, busca, categoria, ordenação e detalhes.
 - Carrinho como rascunho no dispositivo, com limites de quantidade.
 - Cadastro, login/logout, sessão HttpOnly, CSRF, edição de nome e senha.
+- Endereços salvos por cliente, principal, seleção no checkout e retomada da compra após login.
 - Administração autorizada no backend.
 - CRUD de produtos, imagens JPG/PNG/GIF/WEBP de até 5 MB, ativação/desativação.
 - Produtos com histórico devem ser desativados; a exclusão é bloqueada.
@@ -51,7 +52,7 @@ A pasta Front/SLA e Front/bbs-react/legacy são versões anteriores, não execut
 
 Atualização de instalação existente e demonstração no celular: [ENTREGA-COMPLETA.md](docs/ENTREGA-COMPLETA.md).
 
-Os modelos persistidos são Produto, Usuario (com favoritos) e Compra (com Item e Evento). Os modelos POJO antigos foram preservados como legado, sem migração automática de seus dados.
+Os modelos persistidos são Produto, Usuario (com favoritos) e Compra (com Item e Evento), além de EnderecoSalvo. Os modelos POJO antigos foram preservados como legado, sem migração automática de seus dados.
 
 ## Validar
 
@@ -64,7 +65,7 @@ npm run build
 ```
 
 No backend: `mvnw.cmd test` no Windows ou `sh mvnw test` no Linux/macOS.
-Os testes usam perfil test e H2 em memória, sem acessar o banco SQL Server da entrega.
+Os testes Maven usam perfil test e H2 em memória. O workflow também executa testes de navegador com SQL Server em contêiner descartável, sem acessar o banco da escola.
 O workflow Validacao BBS também prepara SQL Server 2022 descartável e executa Chromium/Playwright com frontend e API reais, incluindo persistência após reiniciar a API e repetir a migração. Confira o resultado do seu commit em [VALIDACAO.md](docs/VALIDACAO.md).
 
 Para testar o build local: mantenha a API ligada e execute npm run preview; abra http://localhost:4173.

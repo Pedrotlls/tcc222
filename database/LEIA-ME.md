@@ -4,7 +4,7 @@
 
 1. Abra o SQL Server Management Studio e conecte ao seu servidor.
 2. Abra **01_criar_banco.sql** e clique em Executar (F5).
-3. Execute **03_atualizar_funcionalidades.sql** e confirme as seis tabelas no banco **apibbs**. Em instalação já funcionando, pare a API e execute somente o 03.
+3. Execute **03_atualizar_funcionalidades.sql** e depois **04_enderecos_clientes.sql**. Confirme as sete tabelas no banco **apibbs**. Em instalação já funcionando, pare a API e execute 03 e 04.
 4. Opcionalmente, execute **02_produtos_exemplo.sql** para adicionar cinco produtos fictícios.
 
 O 01 cria tabelas ausentes. O 03 cria favoritos e histórico e acrescenta colunas opcionais de produto ausentes, preservando registros. Pode ser repetido.
