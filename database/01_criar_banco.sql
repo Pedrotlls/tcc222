@@ -1,5 +1,6 @@
 -- Execute no SQL Server Management Studio (SSMS), conectado ao servidor.
 -- Criacao inicial: nao apaga banco, tabelas ou registros existentes.
+-- Depois execute 03_atualizar_funcionalidades.sql antes de iniciar a API.
 USE master;
 GO
 IF DB_ID(N'apibbs') IS NULL

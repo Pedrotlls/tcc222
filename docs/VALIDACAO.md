@@ -1,21 +1,11 @@
-# Validação da entrega
+# Validação da entrega — atualização de 18/09/2026
 
-## Resultados confirmados no GitHub
+- Frontend: testes, lint e build executados localmente; resultados finais registrados após a integração.
+- Backend: nova suíte inclui endereços privados, principal único, validação, limite e preservação da entrega no histórico.
+- SQL Server: workflow executa migrações 01, 03 e 04, repete migrações, inicia a API com validação de esquema, testa navegador desktop/mobile e reinicia a API para conferir persistência.
 
-[Execução 34559080415](https://github.com/Pedrotlls/tcc222/actions/runs/34559080415), commit f03ac877eda2df54d1bd0bf0ebb325547f857ab4:
+O Maven local não conseguiu baixar dependências por falha de resolução de repo.maven.apache.org. A compilação Java e os testes SQL Server desta atualização precisam do resultado do GitHub Actions; não são comprovados por testes anteriores.
 
-- Frontend: npm ci, 5 testes, lint e build aprovados.
-- Backend: compilação e testes Maven aprovados com JDK 17 e banco H2 em memória.
-- Nova cotação regional: frontend e backend aprovados na [execução 34559881447](https://github.com/Pedrotlls/tcc222/actions/runs/34559881447).
-- Os testes de integração cobrem autorização, CSRF, preço calculado no servidor, idempotência, estoque, cancelamento, isolamento entre clientes, login/sessão e transições de status.
+## Laboratório
 
-O frontend também passou localmente. O Maven local havia sido bloqueado pela resolução de DNS de repo.maven.apache.org; a execução no GitHub resolveu essa pendência de compilação/testes Java.
-
-## Pendências do laboratório
-
-- Executar database/01_criar_banco.sql no SQL Server real.
-- Configurar a API no Spring Tools e confirmar validação do esquema SQL Server.
-- Testar compra, cancelamento e persistência depois de reiniciar a API.
-- Executar o roteiro manual de docs/APRESENTACAO.md em desktop e celular.
-
-Os testes H2 não comprovam o funcionamento do driver, esquema, autenticação ou comportamento concorrente no SQL Server. Testes de navegador/visuais não foram executados. Não colocar o projeto em uso comercial; as limitações estão no README.
+Guardar backup do banco e uploads; aplicar 03 e 04 com API parada; iniciar Spring Tools e VS Code. Demonstrar cadastro pelo admin, vários produtos no carrinho, login obrigatório, endereços salvos, frete, pedido, carrinho limpo e acompanhamento. Abrir /mobile no celular na mesma rede. Pagamentos e frete continuam demonstrativos.

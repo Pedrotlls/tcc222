@@ -15,13 +15,14 @@ public class CompraService {
     private final CompraRepository compras;
     private final UsuarioRepository usuarios;
     private final FreteService fretes;
+    private final EnderecoService enderecos;
     @PersistenceContext private EntityManager em;
-    public CompraService(CompraRepository compras, UsuarioRepository usuarios, FreteService fretes) {
-        this.compras=compras; this.usuarios=usuarios; this.fretes=fretes;
+    public CompraService(CompraRepository compras, UsuarioRepository usuarios, FreteService fretes, EnderecoService enderecos) {
+        this.compras=compras; this.usuarios=usuarios; this.fretes=fretes; this.enderecos=enderecos;
     }
     public record Linha(Integer produtoId, Integer quantidade) {}
     public record Endereco(String cep,String rua,String numero,String complemento,String bairro,String cidade,String uf) {}
-    public record Pedido(List<Linha> itens, Endereco endereco, String entrega, String pagamento, String chave) {}
+    public record Pedido(List<Linha> itens, Endereco endereco, String entrega, String pagamento, String chave, Long enderecoId) {}
     public Usuario usuario(String email) {
         return usuarios.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
     }
@@ -45,6 +46,10 @@ public class CompraService {
         if(!Set.of("pix","boleto","credito","debito").contains(Objects.toString(pedido.pagamento(),"")))
             throw erro("Selecione o pagamento demonstrativo.");
         Endereco e=pedido.endereco();
+        if(pedido.enderecoId()!=null) {
+            EnderecoSalvo salvo=enderecos.obter(pedido.enderecoId(),user.id);
+            e=new Endereco(salvo.cep,salvo.rua,salvo.numero,salvo.complemento,salvo.bairro,salvo.cidade,salvo.uf);
+        }
         if(e==null || e.cep()==null || !e.cep().matches("[0-9]{8}") ||
             !texto(e.rua(),2,120) || !texto(e.numero(),1,20) || !texto(e.bairro(),2,80) ||
             !texto(e.cidade(),2,80) || e.uf()==null ||
@@ -53,6 +58,7 @@ public class CompraService {
             throw erro("Preencha um endereco valido, com CEP, rua, numero, bairro, cidade e UF.");
         Compra c=new Compra(); c.usuarioId=user.id; c.clienteNome=user.nome; c.clienteEmail=user.email;
         c.chave=pedido.chave(); c.criadoEm=LocalDateTime.now(); c.status="RECEBIDO";
+        c.historico.add(new Compra.Evento(c.status,"CLIENTE",c.criadoEm));
         c.pagamento=pedido.pagamento(); c.entrega=pedido.entrega();
         c.endereco=e.rua()+", "+e.numero()+" "+Objects.toString(e.complemento(),"")+" — "+e.bairro()+", "+e.cidade()+"/"+e.uf()+" — "+e.cep();
         c.subtotal=BigDecimal.ZERO;
@@ -100,7 +106,10 @@ public class CompraService {
                 if(p!=null) p.setEstoque(p.getEstoque()+item.quantidade);
             }
         }
-        c.status=status; return c;
+        if(c.historico.isEmpty()) c.historico.add(new Compra.Evento(c.status,"IMPORTADO",null));
+        c.status=status;
+        c.historico.add(new Compra.Evento(status,admin?"ADMIN":"CLIENTE",LocalDateTime.now()));
+        return c;
     }
     private boolean texto(String s,int min,int max){return s!=null && s.trim().length()>=min && s.length()<=max;}
     private ResponseStatusException erro(String s){return new ResponseStatusException(HttpStatus.BAD_REQUEST,s);}

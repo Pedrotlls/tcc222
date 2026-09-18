@@ -23,6 +23,21 @@ public class Compra {
     @ElementCollection(fetch=FetchType.EAGER)
     @CollectionTable(name="bbs_compra_item", joinColumns=@JoinColumn(name="compra_id"))
     public List<Item> itens = new ArrayList<>();
+    @ElementCollection(fetch=FetchType.EAGER)
+    @CollectionTable(name="bbs_compra_historico", joinColumns=@JoinColumn(name="compra_id"))
+    @OrderColumn(name="ordem")
+    @org.hibernate.annotations.Fetch(org.hibernate.annotations.FetchMode.SELECT)
+    public List<Evento> historico = new ArrayList<>();
+    @Embeddable
+    public static class Evento {
+        @Column(nullable=false,length=30) public String status;
+        public LocalDateTime ocorridoEm;
+        @Column(nullable=false,length=20) public String origem;
+        public Evento() {}
+        public Evento(String status,String origem,LocalDateTime ocorridoEm) {
+            this.status=status;this.origem=origem;this.ocorridoEm=ocorridoEm;
+        }
+    }
     @Embeddable
     public static class Item {
         public Integer produtoId;

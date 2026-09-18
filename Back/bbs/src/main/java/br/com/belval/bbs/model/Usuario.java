@@ -10,5 +10,10 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 150) public String email;
     @JsonIgnore @Column(nullable = false) public String senhaHash;
     @Column(nullable = false) public String perfil = "CLIENTE";
+    @JsonIgnore
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "bbs_favorito", joinColumns = @JoinColumn(name = "usuario_id"))
+    @Column(name = "produto_id", nullable = false)
+    public java.util.Set<Integer> favoritos = new java.util.HashSet<>();
     public Usuario() {}
 }

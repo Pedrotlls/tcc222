@@ -15,6 +15,9 @@ O backend serve as imagens gravadas em disco. Não precisa usar a pasta Front/SL
 | Checkout | Coletar endereço e modalidade, enviar IDs/quantidades e chave |
 | Account | Login, cadastro, perfil, histórico e administração de pedidos |
 | AdminPage | CRUD e imagens de produtos |
+| MobileHome | Tela /mobile com os mesmos serviços da loja |
+| useFavorites / FavoritoController | Favoritos privados persistidos por usuário |
+| OrderHistory | Linha do tempo dos estados de cada pedido |
 | api.js | Cookies, CSRF, respostas e erros |
 | SecurityConfig / AuthController | Identidade, sessão, senha BCrypt e autorização |
 | FreteService | Estimativa por região, quantidade, valor e modalidade |
@@ -28,6 +31,9 @@ O backend serve as imagens gravadas em disco. Não precisa usar a pasta Front/SL
 - Usuario: nome, e-mail único normalizado, hash de senha e perfil.
 - Compra: dono, chave idempotente por usuário, endereço, modalidade, status e totais.
 - Compra.Item: snapshot de produto, nome, preço e quantidade.
+- Compra.Evento: estado, data da mudança e origem. Estado legado importado não recebe data inventada.
+- bbs_favorito: associação única entre usuário e produto, limite de 200 por conta.
+- bbs_compra_historico: eventos ordenados; repetir a mesma transição não duplica eventos.
 - O histórico não muda quando o produto é editado.
 - Senhas, números de cartão, CVV e códigos de pagamento nunca são gravados em pedidos.
 - O preço estimado do carrinho pode mudar se o administrador atualizar o catálogo; a API usa o preço atual.
@@ -62,6 +68,10 @@ Prefixo visto pelo navegador: /api. Na API Java, não há esse prefixo.
 | PATCH | /pedidos/{id}/cancelar | Dono + CSRF: cancelar RECEBIDO |
 | GET | /admin/pedidos | Administrador: todos os pedidos |
 | GET | /admin/clientes | Administrador: clientes e usuários, sem senha |
+| POST | /admin/clientes | Admin + CSRF: cadastrar CLIENTE sem alterar sessão do admin |
+| GET | /favoritos | Autenticado: lista privada de favoritos |
+| PUT | /favoritos/{produtoId} | Autenticado + CSRF: adicionar produto ativo, idempotente |
+| DELETE | /favoritos/{produtoId} | Autenticado + CSRF: remover da própria lista |
 | PATCH | /admin/pedidos/{id}/status | Administrador + CSRF: transição válida |
 
 A interface administrativa não permite promover usuários ou apagar o histórico de clientes. A conta administrativa inicial é configurada pelo operador.
@@ -106,3 +116,7 @@ R$ 3.500 têm frete grátis. O expresso aplica 1,65 sobre base + quantidade,
 acrescenta R$ 6 e reduz o prazo. A API calcula novamente no fechamento do
 pedido para que o navegador não determine o valor. É uma estimativa do TCC,
 sem peso, dimensões, distância exata ou contrato com transportadora.
+
+## Endereços do cliente
+
+`bbs_endereco` (modelo EnderecoSalvo) guarda até dez endereços por conta, com apelido, CEP, logradouro, número, complemento, bairro, cidade, UF e principal. O índice filtrado SQL Server garante no máximo um principal por usuário; transações serializam alterações por conta. `GET/POST /enderecos` e `PUT/DELETE /enderecos/{id}` usam o usuário autenticado, nunca um dono enviado pelo navegador. O checkout aceita `enderecoId`, valida a propriedade e copia os dados no pedido. Também aceita endereço avulso. Editar/excluir o cadastro não altera compras anteriores.

@@ -8,7 +8,7 @@ Pedidos, frete e modalidades de pagamento são demonstrativos: não existe cobra
 
 Siga o [guia SQL Server + Spring Tools + VS Code](database/LEIA-ME.md).
 
-1. No SSMS, execute [01_criar_banco.sql](database/01_criar_banco.sql).
+1. No SSMS, execute [01_criar_banco.sql](database/01_criar_banco.sql) e depois [03_atualizar_funcionalidades.sql](database/03_atualizar_funcionalidades.sql). Se o banco já funciona, pare a API e execute somente o 03.
 2. Opcional: execute [02_produtos_exemplo.sql](database/02_produtos_exemplo.sql).
 3. No Spring Tools, importe Back/bbs como Existing Maven Project.
 4. Configure DB_URL, DB_USER, DB_PASSWORD e as credenciais iniciais BBS_ADMIN_EMAIL/BBS_ADMIN_PASSWORD conforme o guia.
@@ -43,8 +43,15 @@ A pasta Front/SLA e Front/bbs-react/legacy são versões anteriores, não execut
 - Cancelamento com estorno de estoque; acompanhamento de status.
 - Consulta opcional ao ViaCEP e preenchimento manual quando indisponível.
 - Indicadores, lista de clientes/usuários, documentação e testes.
+- Cadastro de clientes pelo administrador sem trocar sua sessão; busca de clientes e pedidos.
+- Favoritos persistidos na conta entre desktop e celular; comparação de até três produtos.
+- Alerta e filtro de estoque baixo com limite ajustável.
+- Histórico de mudanças de status com data e origem, para cliente e admin.
+- Loja, admin e checkout com estilos próprios; tela mobile funcional em **/mobile**.
 
-Os modelos persistidos são Produto, Usuario e Compra (com Compra.Item). Os modelos POJO antigos foram preservados como legado, sem migração automática de seus dados.
+Atualização de instalação existente e demonstração no celular: [ENTREGA-COMPLETA.md](docs/ENTREGA-COMPLETA.md).
+
+Os modelos persistidos são Produto, Usuario (com favoritos) e Compra (com Item e Evento). Os modelos POJO antigos foram preservados como legado, sem migração automática de seus dados.
 
 ## Validar
 
@@ -58,7 +65,7 @@ npm run build
 
 No backend: `mvnw.cmd test` no Windows ou `sh mvnw test` no Linux/macOS.
 Os testes usam perfil test e H2 em memória, sem acessar o banco SQL Server da entrega.
-O workflow Validacao BBS executa as verificações no GitHub.
+O workflow Validacao BBS também prepara SQL Server 2022 descartável e executa Chromium/Playwright com frontend e API reais, incluindo persistência após reiniciar a API e repetir a migração. Confira o resultado do seu commit em [VALIDACAO.md](docs/VALIDACAO.md).
 
 Para testar o build local: mantenha a API ligada e execute npm run preview; abra http://localhost:4173.
 Publicar apenas dist não publica a API Java. Hospedagem externa requer backend, SQL Server, HTTPS e proxy /api.
@@ -69,9 +76,14 @@ Publicar apenas dist não publica a API Java. Hospedagem externa requer backend,
 - Use dados fictícios. O cadastro não verifica a propriedade do e-mail.
 - Alterar a senha não revoga automaticamente sessões em outros dispositivos.
 - Uso público requer revisão de segurança, rate limiting, confirmação de e-mail, recuperação segura, revogação de sessões, HTTPS e backups.
-- Os scripts SQL são de criação inicial. Não migram tabelas existentes.
+- O script 03 atualiza esta versão preservando dados; esquemas legados diferentes podem precisar de adaptação.
 - Uma senha de banco foi removida da configuração, mas ainda existe no histórico Git anterior. Troque-a se estiver em uso. O histórico não foi reescrito.
 - Algumas imagens dependem de sites externos; a interface exibe fallback se falharem.
-- Frontend e backend passaram na validação automática do GitHub (Java testado em H2). Os scripts ainda precisam ser executados num SQL Server real. Consulte a validação e os Checks do PR.
+- O mobile é uma tela web funcional, acessada pelo navegador. Não gera APK, notificações push ou pedidos offline.
+- Consulte a validação e os Checks do PR para os testes executados; confira também a configuração local e a rede da escola.
 
 Documentos: [arquitetura e endpoints](docs/ARQUITETURA.md), [apresentação](docs/APRESENTACAO.md), [validação](docs/VALIDACAO.md).
+
+## Endereços salvos
+
+Com a API parada, execute `database/04_enderecos_clientes.sql` depois do 03, inclusive em banco novo. A migração pode ser repetida e preserva os registros existentes. Na conta, abra **Meus endereços** para cadastrar, editar, excluir e definir o principal. O checkout carrega o principal e permite selecionar outro ou salvar um novo. Cada cliente acessa apenas seus endereços; pedidos guardam uma cópia da entrega e não mudam quando o cadastro é editado.

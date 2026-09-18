@@ -21,13 +21,14 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @org.springframework.test.context.ActiveProfiles("test")
 class CommerceTests {
     @Autowired MockMvc mvc;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
     @Autowired ObjectMapper json;
     @Autowired ProdutoRepository produtos;
     @Autowired UsuarioRepository usuarios;
     @Autowired CompraRepository compras;
     Integer produtoId;
     @BeforeEach void dados() {
-        compras.deleteAll();usuarios.deleteAll();produtos.deleteAll();
+        jdbc.update("DELETE FROM bbs_endereco");compras.deleteAll();usuarios.deleteAll();produtos.deleteAll();
         Usuario u=new Usuario();u.nome="Cliente teste";u.email="cliente@teste.local";u.senhaHash="hash-nao-utilizado";
         usuarios.save(u);
         Produto p=new Produto();p.setNome("SSD teste");p.setPreco(new BigDecimal("100.00"));p.setEstoque(2);p.setTipo("ssd");
@@ -45,6 +46,22 @@ class CommerceTests {
         mvc.perform(post("/pedidos").with(user("cliente@teste.local")).contentType("application/json").content(pedido(1,"teste-csrf")))
             .andExpect(status().isForbidden());
     }
+    @Test void cadastroPeloAdminProtegePermissoesESessao() throws Exception {
+        String body="{\"nome\":\"Cliente criado pelo admin\",\"email\":\"NOVOADMIN@teste.local\",\"senha\":\"InicialSegura123\",\"perfil\":\"ADMIN\"}";
+        mvc.perform(post("/admin/clientes").with(csrf()).contentType("application/json").content(body)).andExpect(status().isUnauthorized());
+        mvc.perform(post("/admin/clientes").with(user("cliente@teste.local").roles("CLIENTE")).with(csrf()).contentType("application/json").content(body)).andExpect(status().isForbidden());
+        mvc.perform(post("/admin/clientes").with(user("admin@teste.local").roles("ADMIN")).contentType("application/json").content(body)).andExpect(status().isForbidden());
+        Usuario admin=new Usuario();admin.nome="Admin";admin.email="admin@teste.local";admin.perfil="ADMIN";admin.senhaHash="teste";usuarios.save(admin);
+        MockHttpSession session=new MockHttpSession();
+        mvc.perform(post("/admin/clientes").session(session).with(user(admin.email).roles("ADMIN")).with(csrf()).contentType("application/json").content(body))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.perfil").value("CLIENTE"))
+            .andExpect(jsonPath("$.email").value("novoadmin@teste.local")).andExpect(jsonPath("$.senhaHash").doesNotExist());
+        mvc.perform(get("/auth/session").session(session)).andExpect(status().isOk()).andExpect(jsonPath("$.usuario.email").value(admin.email));
+        Usuario cliente=usuarios.findByEmail("novoadmin@teste.local").orElseThrow();
+        assertThat(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().matches("InicialSegura123",cliente.senhaHash)).isTrue();
+        mvc.perform(post("/admin/clientes").with(user(admin.email).roles("ADMIN")).with(csrf()).contentType("application/json").content(body)).andExpect(status().isBadRequest());
+        mvc.perform(post("/admin/clientes").with(user(admin.email).roles("ADMIN")).with(csrf()).contentType("application/json").content("{\"nome\":\"X\",\"email\":\"invalido\",\"senha\":\"123\"}")).andExpect(status().isBadRequest());
+    }
     @Test void pedidoIdempotenteComPrecoDoServidorECancelamento() throws Exception {
         var result=mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf())
             .contentType("application/json").content(pedido(1,"pedido-0001")))
@@ -59,6 +76,40 @@ class CommerceTests {
         mvc.perform(patch("/pedidos/"+id+"/cancelar").with(user("cliente@teste.local")).with(csrf())).andExpect(status().isOk());
         mvc.perform(patch("/pedidos/"+id+"/cancelar").with(user("cliente@teste.local")).with(csrf())).andExpect(status().isOk());
         assertThat(produtos.findById(produtoId).orElseThrow().getEstoque()).isEqualTo(2);
+    }
+    @Test void favoritosSaoPrivadosPersistidosEIdempotentes() throws Exception {
+        mvc.perform(get("/favoritos")).andExpect(status().isUnauthorized());
+        mvc.perform(put("/favoritos/"+produtoId).with(user("cliente@teste.local"))).andExpect(status().isForbidden());
+        for(int i=0;i<2;i++) mvc.perform(put("/favoritos/"+produtoId).with(user("cliente@teste.local")).with(csrf()))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
+        assertThat(usuarios.findByEmail("cliente@teste.local").orElseThrow().favoritos).containsExactly(produtoId);
+        Usuario outro=new Usuario();outro.nome="Outro";outro.email="segundo@teste.local";outro.senhaHash="hash";usuarios.save(outro);
+        mvc.perform(get("/favoritos").with(user(outro.email))).andExpect(content().json("[]"));
+        mvc.perform(delete("/favoritos/"+produtoId).with(user(outro.email)).with(csrf())).andExpect(status().isOk());
+        mvc.perform(get("/favoritos").with(user("cliente@teste.local"))).andExpect(jsonPath("$.length()").value(1));
+        for(int i=0;i<2;i++) mvc.perform(delete("/favoritos/"+produtoId).with(user("cliente@teste.local")).with(csrf())).andExpect(content().json("[]"));
+        mvc.perform(put("/favoritos/2147483647").with(user("cliente@teste.local")).with(csrf())).andExpect(status().isNotFound());
+    }
+    @Test void exclusaoRemoveFavoritosSemExcluirUsuario() throws Exception {
+        mvc.perform(put("/favoritos/"+produtoId).with(user("cliente@teste.local")).with(csrf())).andExpect(status().isOk());
+        mvc.perform(delete("/produtos/"+produtoId).with(user("admin@teste.local").roles("ADMIN")).with(csrf())).andExpect(status().isOk());
+        mvc.perform(get("/favoritos").with(user("cliente@teste.local"))).andExpect(content().json("[]"));
+        assertThat(usuarios.findByEmail("cliente@teste.local")).isPresent();
+    }
+    @Test void historicoPersisteTransicoesSemDuplicarRetries() throws Exception {
+        var result=mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(pedido(1,"pedido-historico")))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.historico[0].status").value("RECEBIDO")).andReturn();
+        long id=json.readTree(result.getResponse().getContentAsString()).get("id").asLong();
+        for(String estado:List.of("SEPARANDO","SEPARANDO","ENVIADO","ENTREGUE"))
+            mvc.perform(patch("/admin/pedidos/"+id+"/status").with(user("admin@teste.local").roles("ADMIN")).with(csrf())
+                .contentType("application/json").content("{\"status\":\""+estado+"\"}")).andExpect(status().isOk());
+        mvc.perform(get("/pedidos").with(user("cliente@teste.local"))).andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].historico.length()").value(4)).andExpect(jsonPath("$[0].historico[3].status").value("ENTREGUE"))
+            .andExpect(jsonPath("$[0].historico[3].origem").value("ADMIN")).andExpect(jsonPath("$[0].historico[3].ocorridoEm").exists())
+            .andExpect(jsonPath("$[0].itens.length()").value(1));
+        mvc.perform(patch("/admin/pedidos/"+id+"/status").with(user("admin@teste.local").roles("ADMIN")).with(csrf()).contentType("application/json").content("{\"status\":\"RECEBIDO\"}"))
+            .andExpect(status().isBadRequest());
+        assertThat(compras.findById(id).orElseThrow().historico).hasSize(4);
     }
     @Test void rejeitaEstoqueEQuantidadeSemAlterarBanco() throws Exception {
         for(int qty:List.of(0,-1,3)) mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf())
@@ -109,4 +160,41 @@ class CommerceTests {
             .andExpect(status().isOk()).andExpect(jsonPath("$.valor").value(79.26))
             .andExpect(jsonPath("$.prazoMin").value(4));
     }
+    String endereco(String apelido, boolean principal) throws Exception {
+        return json.writeValueAsString(Map.of("apelido",apelido,"principal",principal,"cep","06400-000","rua","Rua de teste","numero","10","bairro","Centro","cidade","Barueri","uf","sp"));
+    }
+    @Test void enderecosPrivadosPrincipalEHistoricoDaCompra() throws Exception {
+        mvc.perform(get("/enderecos")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/enderecos").with(user("cliente@teste.local")).contentType("application/json").content(endereco("Casa",false))).andExpect(status().isForbidden());
+        var casa=mvc.perform(post("/enderecos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(endereco("Casa",false)))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.principal").value(true)).andExpect(jsonPath("$.usuarioId").doesNotExist()).andExpect(jsonPath("$.uf").value("SP")).andReturn();
+        long casaId=json.readTree(casa.getResponse().getContentAsString()).get("id").asLong();
+        var trabalho=mvc.perform(post("/enderecos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(endereco("Trabalho",true)))
+            .andExpect(status().isCreated()).andReturn();
+        long trabalhoId=json.readTree(trabalho.getResponse().getContentAsString()).get("id").asLong();
+        mvc.perform(get("/enderecos").with(user("cliente@teste.local")))
+            .andExpect(jsonPath("$.length()").value(2)).andExpect(jsonPath("$[0].id").value(trabalhoId)).andExpect(jsonPath("$[1].principal").value(false));
+        Usuario outro=new Usuario();outro.nome="Outro";outro.email="endereco@teste.local";outro.senhaHash="hash";usuarios.save(outro);
+        mvc.perform(get("/enderecos").with(user(outro.email))).andExpect(content().json("[]"));
+        mvc.perform(put("/enderecos/"+casaId).with(user(outro.email)).with(csrf()).contentType("application/json").content(endereco("Invasao",true))).andExpect(status().isNotFound());
+        mvc.perform(delete("/enderecos/"+casaId).with(user(outro.email)).with(csrf())).andExpect(status().isNotFound());
+        var payload=(com.fasterxml.jackson.databind.node.ObjectNode)json.readTree(pedido(1,"pedido-endereco"));
+        payload.put("enderecoId",casaId);payload.remove("endereco");
+        mvc.perform(post("/pedidos").with(user(outro.email)).with(csrf()).contentType("application/json").content(json.writeValueAsString(payload))).andExpect(status().isNotFound());
+        mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(json.writeValueAsString(payload))).andExpect(status().isCreated());
+        mvc.perform(delete("/enderecos/"+trabalhoId).with(user("cliente@teste.local")).with(csrf())).andExpect(status().isNoContent());
+        mvc.perform(get("/enderecos").with(user("cliente@teste.local"))).andExpect(jsonPath("$[0].principal").value(true));
+        mvc.perform(delete("/enderecos/"+casaId).with(user("cliente@teste.local")).with(csrf())).andExpect(status().isNoContent());
+        mvc.perform(get("/pedidos").with(user("cliente@teste.local"))).andExpect(jsonPath("$[0].endereco").value(org.hamcrest.Matchers.containsString("Rua de teste")));
+        // Retry da compra deve funcionar mesmo após excluir o endereço salvo.
+        mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(json.writeValueAsString(payload))).andExpect(status().isCreated());
+        assertThat(compras.count()).isEqualTo(1);
+    }
+    @Test void enderecoInvalidoNaoPersisteELimiteEhPorCliente() throws Exception {
+        mvc.perform(post("/enderecos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(endereco("Casa",false).replace("06400-000","123"))).andExpect(status().isBadRequest());
+        for(int i=0;i<10;i++) mvc.perform(post("/enderecos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(endereco("Casa "+i,false))).andExpect(status().isCreated());
+        mvc.perform(post("/enderecos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(endereco("Extra",false))).andExpect(status().isBadRequest());
+        mvc.perform(get("/enderecos").with(user("cliente@teste.local"))).andExpect(jsonPath("$.length()").value(10));
+    }
+
 }

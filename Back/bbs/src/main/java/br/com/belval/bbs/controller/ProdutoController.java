@@ -288,6 +288,9 @@ public class ProdutoController {
         if (compras.existsByItensProdutoId(id))
             throw new org.springframework.web.server.ResponseStatusException(HttpStatus.CONFLICT,
                 "Produto possui historico de pedidos. Desative-o em vez de excluir.");
+        // Remove referências da lista de desejos ao excluir produto sem pedidos.
+        entityManager.createNativeQuery("DELETE FROM bbs_favorito WHERE produto_id = :id")
+            .setParameter("id",id).executeUpdate();
         repository.deleteById(id);
         return ResponseEntity.ok("Produto apagado com sucesso!");
     }

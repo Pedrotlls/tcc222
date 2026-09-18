@@ -4,10 +4,10 @@
 
 1. Abra o SQL Server Management Studio e conecte ao seu servidor.
 2. Abra **01_criar_banco.sql** e clique em Executar (F5).
-3. Confirme as quatro tabelas no banco **apibbs**.
+3. Execute **03_atualizar_funcionalidades.sql** e confirme as seis tabelas no banco **apibbs**. Em instalação já funcionando, pare a API e execute somente o 03.
 4. Opcionalmente, execute **02_produtos_exemplo.sql** para adicionar cinco produtos fictícios.
 
-O script cria apenas tabelas ausentes. Não altera o formato de tabelas antigas.
+O 01 cria tabelas ausentes. O 03 cria favoritos e histórico e acrescenta colunas opcionais de produto ausentes, preservando registros. Pode ser repetido.
 Se apibbs já existir com outro esquema, faça backup e compare os campos antes de adaptar.
 O script usa os nomes snake_case do Hibernate e valores monetários DECIMAL(16,2).
 Não cria login SQL nem atribui permissões ao servidor. Use o login SQL do laboratório autorizado a acessar apibbs.
@@ -61,8 +61,8 @@ Não é necessário alterar as tabelas para essa regra.
 - **Connection refused / TCP/IP connection failed:** confirme se o serviço SQL Server está ligado, se TCP/IP está habilitado e qual porta ele usa.
 - **Login failed:** confira DB_USER, DB_PASSWORD, o modo de autenticação configurado e o acesso do login ao banco.
 - **Cannot open database apibbs:** confirme a execução do primeiro script e o acesso do login a esse banco.
-- **Schema-validation / missing table:** execute o script completo no servidor apontado pela URL, no esquema dbo.
-- **Missing column / wrong column type:** existe uma tabela de outra versão; este script não migra estruturas anteriores.
+- **Schema-validation / missing table:** execute o 01 e depois o 03 no servidor apontado pela URL, no esquema dbo.
+- **Missing column / wrong column type:** execute o 03; se persistir, compare a tabela legada com o script. Não exclua seus dados.
 - **Could not resolve placeholder DB_URL:** inclua as variáveis na configuração de execução e reinicie.
 - **Could not resolve dependencies:** deixe o Maven terminar o download e confira a rede/proxy da escola.
 - **Catálogo vazio:** execute o segundo script ou cadastre produtos como administrador.
@@ -71,8 +71,10 @@ Não rode os scripts no H2. O H2 é reservado aos testes automatizados, que ativ
 
 ## Verificação e referências
 
-Os scripts foram conferidos com os modelos Java, mas ainda não executados em um SQL Server real neste ambiente.
-Depois de subir o backend, crie um cliente e um pedido, reinicie a API e confirme a persistência.
-Não marque o banco como validado antes dessa execução.
+O workflow inclui SQL Server real em contêiner descartável, com os scripts 01 e 03, compra pelo navegador e verificação após reiniciar a API. Confira o resultado em [VALIDACAO.md](../docs/VALIDACAO.md). No laboratório, confirme suas variáveis locais e teste a rede do celular.
 
 Referência da sintaxe: [Microsoft — CREATE TABLE](https://learn.microsoft.com/en-us/sql/t-sql/statements/create-table-transact-sql).
+
+## Endereços salvos
+
+Com a API parada, execute `database/04_enderecos_clientes.sql` depois do 03, inclusive em banco novo. A migração pode ser repetida e preserva os registros existentes. Na conta, abra **Meus endereços** para cadastrar, editar, excluir e definir o principal. O checkout carrega o principal e permite selecionar outro ou salvar um novo. Cada cliente acessa apenas seus endereços; pedidos guardam uma cópia da entrega e não mudam quando o cadastro é editado.
