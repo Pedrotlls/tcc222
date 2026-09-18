@@ -319,7 +319,7 @@ export default function AdminPage({ fechar, onProdutoSalvo }) {
           <label className="adm-full">Descrição<textarea rows={3} maxLength={4000} value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))} placeholder="Características e especificações"/></label>
           <label>Preço (R$)<input type="number" min="0.01" step="0.01" required value={form.preco} onChange={e=>setForm(f=>({...f,preco:e.target.value}))}/></label>
           <label>Estoque<input type="number" min="0" max="1000000" step="1" required value={form.estoque} onChange={e=>setForm(f=>({...f,estoque:e.target.value}))}/></label>
-          <label className="adm-full">Categoria<select value={form.tipo} onChange={e=>setForm(f=>({...f,tipo:e.target.value}))}><option value="">Selecione uma categoria</option>{CATEGORIAS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></label>
+          <label className="adm-full">Categoria<select aria-label="Categoria" value={form.tipo} onChange={e=>setForm(f=>({...f,tipo:e.target.value}))}><option value="">Selecione uma categoria</option>{CATEGORIAS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></label>
           <div className="adm-full adm-upload">
             <label htmlFor="adm-product-image">Imagem do produto <small>JPG, PNG, WEBP ou GIF · Até 5 MB</small></label>
             {imagemPreview && <img src={imagemPreview} alt="Prévia do produto"/>}

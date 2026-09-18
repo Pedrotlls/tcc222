@@ -100,7 +100,7 @@ export default function Checkout({ fechar, onComplete }) {
         </>}
         {step === 2 && <form onSubmit={e => {e.preventDefault();if(endereco.cep.replace(/\D/g,"").length!==8){setError("CEP deve ter 8 dígitos.");return;}cotar();}}>
           <fieldset disabled={busy || carregandoEnderecos} className="ck-card ck-address"><legend className="ck-title">Endereço de entrega</legend>
-            <div className="ck-saved"><label>Endereço salvo<select value={enderecoId} onChange={e=>{const id=e.target.value;setEnderecoId(id);setEndereco(enderecos.find(a=>String(a.id)===id)||emptyAddress());setCotacao(null);}}>
+            <div className="ck-saved"><label>Endereço salvo<select aria-label="Endereço salvo" value={enderecoId} onChange={e=>{const id=e.target.value;setEnderecoId(id);setEndereco(enderecos.find(a=>String(a.id)===id)||emptyAddress());setCotacao(null);}}>
               <option value="">Novo endereço</option>{enderecos.map(a=><option key={a.id} value={a.id}>{a.apelido}{a.principal?' · Principal':''} — {a.rua}, {a.numero}</option>)}
             </select></label>{carregandoEnderecos && <p role="status">Carregando seus endereços…</p>}
             {enderecoId ? <p>Endereço preenchido da sua conta. Para alterar, use Meus endereços ou escolha Novo endereço.</p> : <><label className="address-check"><input type="checkbox" checked={salvarEndereco} onChange={e=>setSalvarEndereco(e.target.checked)}/>Salvar este endereço na minha conta</label>{salvarEndereco && <label>Apelido do endereço<input value={apelido} minLength={2} maxLength={40} required onChange={e=>setApelido(e.target.value)} placeholder="Casa, trabalho…"/></label>}</>}
