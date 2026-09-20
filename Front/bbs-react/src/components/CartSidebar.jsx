@@ -17,7 +17,7 @@ export default function CartSidebar() {
     cart, cartOrder, isOpen, setIsOpen,
     changeQty, freteGlobal, setFreteGlobal,
     freteInfo, setFreteInfo,
-    totalQty, subtotal, total,
+    total,
   } = useCart();
 
   // CEP digitado pelo usuário no formulário de frete.

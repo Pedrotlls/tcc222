@@ -1,0 +1,99 @@
+/* Estrutura do checkout original: tela inteira, etapas e resumo lateral.
+   Isolado do painel administrativo e dos estilos globais. */
+.bbs-dialog.bbs-checkout {
+  position: fixed; inset: 0; margin: 0; padding: 0 0 40px;
+  width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh;
+  border: none; border-radius: 0; color: #fff; text-align: left;
+  background: #060606;
+  background-image: radial-gradient(circle at 10% 30%,rgba(255,65,108,.07),transparent 40%),radial-gradient(circle at 90% 70%,rgba(255,75,43,.06),transparent 40%);
+  font: .9rem/1.6 'Poppins',sans-serif;
+}
+.bbs-checkout *, .bbs-checkout *::before, .bbs-checkout *::after { box-sizing: border-box; }
+.bbs-checkout::backdrop { background: #000; }
+.bbs-checkout .bbs-dialog-heading { padding: 16px 5%; height: 76px; background: rgba(8,8,8,.9); border-bottom: 1px solid #ffffff12; }
+.bbs-checkout .bbs-dialog-heading h2 { font-size: 1rem; margin: 0; position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.bbs-checkout .bbs-dialog-heading button { margin-left: auto; background: transparent; border: 0; font-size: 2rem; line-height: 1; color: #999; }
+.bbs-checkout .ck-brand { position: absolute; top: 15px; left: 5%; display: flex; align-items: center; gap: 20px; pointer-events: none; }
+.ck-brand b { font-size: 1.6rem; font-weight: 700; letter-spacing: 4px; background: linear-gradient(45deg,#ff416c,#ff4b2b); background-clip: text; -webkit-background-clip: text; color: transparent; }
+.ck-brand span { color: #999; letter-spacing: 2px; font-size: .65rem; }
+.bbs-checkout .ck-progress { display: flex; align-items: center; max-width: 680px; padding: 28px 5%; margin: 0 auto; list-style: none; }
+.ck-progress li { display: flex; align-items: center; gap: 8px; color: #999; font-size: .75rem; white-space: nowrap; }
+.ck-progress li:not(:last-child) { flex: 1; }
+.ck-progress li:not(:last-child)::after { content: ''; flex: 1; height: 1px; background: #ffffff18; margin: 0 12px; min-width: 12px; }
+.ck-progress li > span { width: 36px; height: 36px; border: 2px solid #ffffff12; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; font-weight: 700; }
+.ck-progress .active { color: white; }
+.ck-progress .active > span { background: linear-gradient(45deg,#ff416c,#ff4b2b); border-color: #ff416c; box-shadow: 0 0 18px #ff416c66; }
+.ck-progress .done > span { color: #00e07a; border-color: #00e07a; }
+.ck-progress .done::after { background: #00e07a !important; }
+.ck-demo { margin: 0 5% 24px; font-size: .7rem; color: #aaa; letter-spacing: .06em; }
+.bbs-checkout > .bbs-error { margin: 0 5% 24px; }
+.ck-layout { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 24px; padding: 0 5%; align-items: start; }
+.ck-main { min-width: 0; }
+.bbs-checkout .ck-card { background: rgba(16,16,16,.75); border: 1px solid #ffffff12; border-radius: 16px; backdrop-filter: blur(20px); padding: 28px; margin: 0 0 24px; min-width: 0; }
+.bbs-checkout .ck-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #aaa; margin: 0 0 20px; padding: 0 0 16px; border-bottom: 1px solid #ffffff12; }
+.bbs-checkout legend.ck-title { float: left; width: 100%; }
+.bbs-checkout legend.ck-title + * { clear: both; }
+.ck-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid #ffffff12; }
+.ck-item img, .ck-item-placeholder { width: 56px; height: 56px; object-fit: contain; background: #ffffff0a; border-radius: 8px; padding: 4px; flex-shrink: 0; }
+.ck-item-placeholder { display: grid; place-items: center; color: #ff416c; font-weight: 700; }
+.ck-item > div { flex: 1; min-width: 0; }
+.ck-item h3 { margin: 0; font-size: .9rem; overflow-wrap: anywhere; }
+.ck-item p { margin: 4px 0 0; color: #999; font-size: .78rem; }
+.ck-item > strong { color: #ff416c; white-space: nowrap; }
+.bbs-checkout .ck-address label { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; color: #aaa; font-size: .68rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.bbs-checkout .ck-address input { width: 100%; padding: 13px 15px; background: #ffffff0a; border: 1px solid #ffffff17; border-radius: 10px; color: #fff; font: .9rem 'Poppins',sans-serif; }
+.ck-cep { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+.ck-cep button { margin-bottom: 16px; }
+.ck-street { display: grid; grid-template-columns: 1fr 100px; gap: 12px; }
+.ck-city { display: grid; grid-template-columns: 1fr 1fr 70px; gap: 12px; }
+.bbs-checkout .ck-choice { display: flex; flex-direction: row; align-items: center; gap: 12px; padding: 16px; border: 2px solid #ffffff12; border-radius: 12px; cursor: pointer; margin-bottom: 12px; background: transparent; }
+.bbs-checkout .ck-choice.selected { border-color: #ff416c; background: #ff416c0f; }
+.bbs-checkout .ck-choice input { appearance: auto; width: 18px; height: 18px; min-height: 0; margin: 0; flex-shrink: 0; accent-color: #ff416c; }
+.ck-choice b { display: block; font-size: .9rem; color: white; }
+.ck-choice small { display: block; font-size: .75rem; color: #aaa; }
+.ck-choice em { margin-left: auto; color: #ff809c; font-size: .75rem; font-style: normal; }
+.ck-payment-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ck-pay-icon { font-size: 1.8rem; color: #ff416c; }
+.ck-payment-panel { text-align: center; border-top: 1px solid #ffffff12; margin-top: 12px; padding-top: 24px; }
+.ck-payment-panel h3 { margin: 8px 0; }
+.ck-payment-panel p { color: #aaa; font-size: .85rem; }
+.ck-payment-symbol { color: #00bdae; font-size: 4rem; line-height: 1.2; }
+.ck-simulation { color: #00bdae; font-size: .7rem; letter-spacing: 1px; }
+.ck-bank-card { width: min(100%,340px); min-height: 195px; margin: 0 auto 20px; padding: 24px; border: 1px solid #ff416c55; border-radius: 16px; background: linear-gradient(135deg,#27131c,#12121c); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; text-align: left; box-shadow: 0 12px 30px #0006; }
+.ck-bank-card b { color: #ff416c; letter-spacing: 3px; }
+.ck-bank-card span, .ck-bank-card small { font-size: .65rem; color: #bbb; }
+.ck-bank-card strong { width: 100%; font-size: 1.1rem; letter-spacing: 2px; }
+.ck-barcode { width: 180px; height: 50px; margin: auto; opacity: .5; background: repeating-linear-gradient(90deg,#eee 0 2px,transparent 2px 5px,#eee 5px 6px,transparent 6px 9px); }
+.bbs-checkout .ck-nav { display: flex; gap: 12px; margin-top: 24px; }
+.bbs-checkout button.ck-next { flex: 1; padding: 15px; background: linear-gradient(45deg,#ff416c,#ff4b2b); border: none; border-radius: 11px; color: #fff; font: 700 .9rem 'Poppins',sans-serif; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 6px 20px #ff416c47; cursor: pointer; }
+.bbs-checkout button.ck-prev { padding: 15px 22px; background: transparent; border: 1px solid #ffffff20; border-radius: 11px; color: #aaa; font: .88rem 'Poppins',sans-serif; cursor: pointer; }
+.bbs-checkout button:disabled { opacity: .55; cursor: wait; }
+.ck-summary { position: sticky; top: 24px; }
+.ck-summary-item { display: flex; gap: 8px; justify-content: space-between; font-size: .8rem; color: #aaa; margin-bottom: 7px; }
+.ck-summary-item > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.ck-summary-item > span:last-child { white-space: nowrap; }
+.ck-summary dl { margin: 24px 0 0; }
+.ck-summary dl > div { display: flex; justify-content: space-between; gap: 12px; font-size: .88rem; color: #bbb; margin-bottom: 10px; }
+.ck-summary dd { margin: 0; white-space: nowrap; }
+.ck-summary .ck-discount { color: #00e07a; }
+.ck-summary .ck-total { font-size: 1.1rem; font-weight: 700; color: white; border-top: 1px solid #ffffff12; padding-top: 14px; margin-top: 16px; }
+.ck-total dd { color: #ff416c; }
+.ck-saving { background: #00e07a0f; border: 1px solid #00e07a26; border-radius: 10px; padding: 12px; color: #00e07a; font-size: .78rem; }
+.ck-muted { color: #999; font-size: .78rem; line-height: 1.7; }
+.bbs-checkout .ck-success { max-width: 600px; margin: 40px auto; text-align: center; }
+.ck-success-icon { width: 80px; height: 80px; display: grid; place-items: center; margin: 0 auto 24px; border: 2px solid #00e07a; color: #00e07a; background: #00e07a1f; border-radius: 50%; font-size: 2rem; }
+.ck-order-code { display: block; padding: 16px; background: #ffffff0a; border-radius: 10px; color: #ff416c; letter-spacing: 4px; }
+@media(max-width:900px) { .ck-layout { grid-template-columns: minmax(0,1fr); } .ck-summary { position: static; } }
+@media(max-width:600px) {
+  .ck-brand span { display: none; }
+  .bbs-checkout .ck-card { padding: 18px; }
+  .ck-payment-options, .ck-city { grid-template-columns: 1fr; }
+  .ck-nav { flex-wrap: wrap; }
+  .ck-nav button { width: 100%; }
+  .ck-item { flex-wrap: wrap; }
+  .ck-choice em { display: none; }
+  .ck-progress li { font-size: .65rem; gap: 4px; }
+  .ck-progress li > span { width: 28px; height: 28px; }
+  .ck-progress li:not(:last-child)::after { margin-inline: 5px; }
+  .bbs-checkout .ck-success { margin-inline: 5%; }
+}

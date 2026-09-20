@@ -1,101 +1,25 @@
 // ============================================================
 //  Cart.jsx  —  Sidebar do carrinho de compras
 //  Painel lateral que desliza da direita com os itens do carrinho,
-//  cálculo de frete via API ViaCEP e botão de finalizar pedido.
+//  subtotal e botão de finalizar pedido.
 // ============================================================
 
 import { useCart } from "../context/CartContext";
-import { useState } from "react";
 
 export default function Cart({ abrirCheckout }) {
   // Cart.jsx: Sidebar do carrinho (version principal)
   // - Mostra itens do carrinho (via CartContext)
-  // - Calcula frete usando ViaCEP (API externa)
-  // - Mostra subtotal/total (inclui freteGlobal)
+  // - Mostra o subtotal; o frete é cotado no checkout
   // - Ao finalizar, chama abrirCheckout() para abrir o fluxo de compra.
   // Dados e funções do contexto global do carrinho
   const {
     cart,           // Objeto com todos os itens { [id]: { name, price, img, qty } }
     cartOrder,      // Array de IDs na ordem de inserção
     changeQty,      // Função para incrementar/decrementar quantidade
-    total,          // Total com frete incluído
-    freteGlobal,    // Valor do frete calculado
-    setFreteGlobal, // Atualiza o frete no contexto global
-    freteInfo,      // Texto descritivo do frete
-    setFreteInfo,
+    subtotal,       // Total dos produtos; frete ainda não cotado
     isOpen,         // Sidebar visível (true) ou oculta (false)
     setIsOpen,
   } = useCart();
-
-  // CEP digitado pelo usuário no campo de frete
-  const [cep, setCep] = useState("");
-
-  // true enquanto aguarda a resposta da API ViaCEP.
-  // Serve para trocar “OK”/“...” no botão de cálculo.
-  const [loadingFrete, setLoadingFrete] = useState(false);
-
-
-  // ── calcularFrete ─────────────────────────────────────────
-  // Consulta a API ViaCEP com o CEP digitado.
-  // Se válido, define frete fixo de R$ 15,90 e exibe a cidade/UF.
-  async function calcularFrete() {
-    /*
-     * Chamada de API externa (NÃO é o seu backend).
-     * URL:
-     *   GET https://viacep.com.br/ws/{cep}/json/
-     *
-     * O que faz:
-     * - valida o CEP (8 dígitos)
-     * - usa ViaCEP para obter cidade/UF
-     * - define um frete fixo no carrinho (R$ 15,90)
-     * - guarda um texto descritivo para exibir na UI
-     */
-    // Transformar o que o usuário digitou (ex: 01001-000)
-    // em apenas dígitos (01001000)
-    const cepLimpo = cep.replace(/\D/g, "");
-
-    // Validação simples: CEP BR sempre tem 8 dígitos
-    if (cepLimpo.length !== 8) {
-      alert("CEP inválido!");
-      return;
-    }
-
-    // Marca loading para trocar o texto do botão
-    setLoadingFrete(true);
-
-    try {
-      /*
-       * Chamada de API externa:
-       *   GET https://viacep.com.br/ws/{cep}/json/
-       *
-       * O que é retornado (principalmente):
-       * - data.localidade (cidade)
-       * - data.uf (UF/estado)
-       * - se der erro: data.erro = true
-       */
-      const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
-      const data = await res.json();
-
-      // Se ViaCEP disser que não achou, não mexe no frete
-      if (data.erro) {
-        alert("CEP não encontrado!");
-        return;
-      }
-
-      // Regra do projeto: frete fixo (independente da cidade)
-      setFreteGlobal(15.90);
-
-      // Texto que aparece na UI
-      setFreteInfo(`🚚 Entrega para ${data.localidade} - ${data.uf}`);
-    } catch {
-      // Qualquer problema de rede/servidor vira erro amigável
-      alert("Erro ao calcular frete.");
-    } finally {
-      // Para o estado de loading do botão
-      setLoadingFrete(false);
-    }
-
-  }
 
   return (
     <>
@@ -147,7 +71,7 @@ export default function Cart({ abrirCheckout }) {
               return (
                 <div key={id} className="cart-item">
                   {/* Miniatura do produto */}
-                  <img src={item.img} alt={item.name} width={60} />
+                  {item.img && <img src={item.img} alt={item.name} width={60} onError={e => {e.currentTarget.style.display="none";}} />}
 
                   {/* Nome e preço */}
                   <div style={{ flex: 1 }}>
@@ -159,11 +83,11 @@ export default function Cart({ abrirCheckout }) {
 
                   {/* Controles de quantidade: -, contador, +, lixeira */}
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <button onClick={() => changeQty(id, -1)}>-</button>
+                    <button aria-label={"Diminuir " + item.name} onClick={() => changeQty(id, -1)}>-</button>
                     <span>{item.qty}</span>
-                    <button onClick={() => changeQty(id, +1)}>+</button>
+                    <button aria-label={"Aumentar " + item.name} disabled={item.qty >= (item.max ?? 99)} onClick={() => changeQty(id, +1)}>+</button>
                     {/* Remove o item inteiro decrementando toda a quantidade */}
-                    <button onClick={() => changeQty(id, -item.qty)}>🗑</button>
+                    <button aria-label={"Remover " + item.name} onClick={() => changeQty(id, -item.qty)}>🗑</button>
                   </div>
                 </div>
               );
@@ -181,65 +105,18 @@ export default function Cart({ abrirCheckout }) {
             background: "rgba(0,0,0,0.3)", // camada escura sobre o fundo
           }}
         >
-          {/* Label da seção de frete */}
-          <p style={{
-            fontSize: ".8rem", color: "#888", marginBottom: "8px",
-            fontWeight: "bold", letterSpacing: "1px",
-          }}>
-            CALCULAR ENTREGA
+          <p style={{ color: "#bbb", lineHeight: 1.6 }}>
+            O frete será calculado no checkout conforme CEP/UF, quantidade,
+            valor do carrinho e modalidade.
           </p>
-
-          {/* Campo CEP + botão OK */}
-          <div style={{ display: "flex", gap: "10px" }}>
-            <input
-              type="text"
-              placeholder="00000-000"
-              maxLength={9}
-              value={cep}
-              onChange={e => setCep(e.target.value)}
-              style={{
-                flex: 1,
-                background: "rgba(255,255,255,0.05)",      // campo escuro translúcido
-                border: "1px solid var(--glass-border)",
-                borderRadius: "8px",
-                padding: "12px",
-                color: "white",
-                outline: "none",
-                fontSize: "0.9rem",
-              }}
-            />
-            <button
-              onClick={calcularFrete}
-              style={{
-                background: "#ff416c", border: "none", borderRadius: "8px",
-                color: "white", padding: "0 20px", cursor: "pointer", fontWeight: "bold",
-              }}
-            >
-              {/* Mostra "..." enquanto consulta o CEP, "OK" quando ocioso */}
-              {loadingFrete ? "..." : "OK"}
-            </button>
-          </div>
-
-          {/* Texto de retorno da consulta CEP (cidade e UF) em verde */}
-          {freteInfo && (
-            <p style={{ marginTop: "10px", fontSize: ".85rem", color: "#4caf50" }}>
-              {freteInfo}
-            </p>
-          )}
-
-          {/* Linha de frete */}
-          <div style={{ display: "flex", justifyContent: "space-between", margin: "10px 0", color: "#bbb" }}>
-            <span>Frete:</span>
-            <span>{freteGlobal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-          </div>
 
           {/* Total em destaque (fonte maior, negrito) */}
           <div style={{
             display: "flex", justifyContent: "space-between",
             fontWeight: "700", fontSize: "1.4rem", marginBottom: "20px",
           }}>
-            <span>Total:</span>
-            <span>{total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+            <span>Subtotal:</span>
+            <span>{subtotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
           </div>
 
           {/* Botão Finalizar Pedido: fecha a sidebar e abre o Checkout.

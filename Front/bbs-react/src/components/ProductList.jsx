@@ -1,256 +1,83 @@
 import { useState, useEffect } from "react";
-import { listarProdutosAtivos } from "../services/produtosService.js"; // agora busca só os ativos
+import { listarProdutosAtivos } from "../services/produtosService";
 import { useCart } from "../context/CartContext";
-
-// ProductList.jsx — tela pública (loja)
-// - Busca apenas produtos ativos no backend (GET /produtos/ativos)
-// - Agrupa/organiza por “tipo” (categoria)
-// - Renderiza cards com botão para adicionar ao carrinho
-// - O estado do carrinho e a função addToCart vêm do CartContext
-
-const CATEGORIAS = [
-  { id: "gpu",      label: "Placas de Vídeo",  sub: "GPU · Graphics"         },
-  { id: "cpu",      label: "Processadores",     sub: "CPU · Computing"        },
-  { id: "ram",      label: "Memória RAM",        sub: "DDR4 · DDR5"            },
-  { id: "ssd",      label: "SSDs",               sub: "NVMe · M.2 · SATA"     },
-  { id: "mae",      label: "Placas Mãe",         sub: "Motherboards"           },
-  { id: "fonte",    label: "Fontes",             sub: "PSU · Power Supply"     },
-  { id: "cooler",   label: "Coolers",            sub: "Air · Liquid · AIO"     },
-  { id: "gabinete", label: "Gabinetes",          sub: "Mid · Full Tower · ITX" },
-  { id: "monitor",  label: "Monitores",          sub: "IPS · 144Hz · 4K"      },
-  { id: "mouse",    label: "Mouses",             sub: "Gamer · Alta precisão"  },
-  { id: "teclado",  label: "Teclados",           sub: "Mecânico · TKL · RGB"   },
-  { id: "mousepad", label: "Mousepads",          sub: "Extended · Speed · RGB" },
-  { id: "headset",  label: "Headsets & Outros",  sub: "Áudio · Webcam"         },
-];
-
-const fmt = v =>
-  Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-function ProdutoCard({ produto, addToCart }) {
-  const { id, nome, descricao, preco, estoque, imgUrl } = produto;
-  const semEstoque = estoque !== null && estoque !== undefined && estoque <= 0;
-
-  return (
-    <article style={{
-      background: "rgba(255,255,255,0.04)",
-      borderRadius: "16px",
-      padding: "20px",
-      minWidth: "220px",
-      maxWidth: "260px",
-      display: "flex",
-      flexDirection: "column",
-      gap: "10px",
-      border: "1px solid rgba(255,255,255,0.08)",
-      flex: "0 0 auto",
-      position: "relative",
-    }}>
-      {semEstoque && (
-        <span style={{
-          position: "absolute", top: 12, right: 12,
-          background: "rgba(255,65,108,.15)",
-          border: "1px solid rgba(255,65,108,.3)",
-          color: "#ff8fa0", fontSize: ".65rem", fontWeight: 700,
-          padding: "2px 8px", borderRadius: 20,
-        }}>
-          Sem estoque
-        </span>
-      )}
-
-      <div style={{
-        height: "140px",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(255,255,255,.03)", borderRadius: 10,
-        overflow: "hidden",
-      }}>
-        {imgUrl ? (
-          <img src={imgUrl} alt={nome}
-            style={{ maxHeight: "140px", maxWidth: "100%", objectFit: "contain" }}
-          />
-        ) : (
-          <span style={{ fontSize: "3.5rem" }}>🖥️</span>
-        )}
-      </div>
-
-      <h3 style={{ margin: 0, fontSize: "1rem", color: "white", lineHeight: 1.3 }}>
-        {nome}
-      </h3>
-
-      {descricao && (
-        <p style={{ margin: 0, fontSize: "0.78rem", color: "#777", lineHeight: 1.5 }}>
-          {descricao.length > 70 ? descricao.slice(0, 70) + "…" : descricao}
-        </p>
-      )}
-
-      <span style={{ color: "#ff416c", fontWeight: "bold", fontSize: "1.1rem" }}>
-        {fmt(preco)}
-      </span>
-
-      {estoque !== null && estoque !== undefined && (
-        <span style={{ fontSize: ".72rem", color: estoque <= 5 ? "#f5a623" : "#555" }}>
-          {estoque <= 0 ? "Indisponível" : `${estoque} em estoque`}
-        </span>
-      )}
-
-      {/*
-       * Botão do card do produto:
-       * - Se semEstoque=true:
-       *     - disabled fica true
-       *     - clique não acontece
-       *     - texto vira “Indisponível”
-       * - Se semEstoque=false:
-       *     - clique chama o contexto addToCart(...)
-       *
-       * addToCart(id, nome, price, img)
-       * → atualiza o carrinho global (CartContext)
-       * → abre a sidebar do carrinho
-       */}
-      <button
-        disabled={semEstoque}
-        onClick={() => {
-          if (semEstoque) return;
-          // Chamando a “função do carrinho” (contexto)
-          addToCart(id, nome, Number(preco), imgUrl || "🖥️");
-        }}
-        style={{
-          background: semEstoque
-            ? "rgba(255,255,255,.06)"
-            : "linear-gradient(135deg, #ff416c, #ff4b2b)",
-          border: "none", borderRadius: "8px", color: semEstoque ? "#555" : "white",
-          padding: "10px", cursor: semEstoque ? "not-allowed" : "pointer",
-          fontWeight: "bold", fontFamily: "'Poppins',sans-serif",
-          fontSize: ".88rem",
-        }}
-      >
-        {semEstoque ? "Indisponível" : "Adicionar ao Carrinho"}
-      </button>
-
-    </article>
-  );
+import Modal from "./Modal";
+import HardwareArt from "./HardwareArt";
+import { categories, catalogView } from "./catalogView";
+import useFavorites from "./useFavorites";
+import {toggleComparison} from "../utils/comparison";
+import "./features.css";
+const cats = Object.fromEntries(Object.entries(categories).map(([id,c])=>[id,c.name]));
+const money = v => Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+function ProductImage({p}) {
+  const [failed, setFailed] = useState(false);
+  return !p.imgUrl || failed ? <div className="sf-product-art" role="img" aria-label={`Ilustração de ${cats[p.tipo] || "hardware"}; foto do produto não cadastrada`}><HardwareArt tipo={p.tipo}/><span>Ilustração da categoria</span></div> :
+    <img src={p.imgUrl} alt={p.nome} loading="lazy" onError={() => setFailed(true)} />;
 }
-
-export default function ProductList() {
-  /*
-   * ProductList.jsx — página pública (loja) que:
-   * 1) busca produtos ATIVOS no backend (GET /produtos/ativos)
-   * 2) organiza esses produtos em seções por categoria
-   * 3) monta cards com o botão “Adicionar ao Carrinho”
-   *
-   * Importante:
-   * - A chamada à API acontece dentro do useEffect abaixo.
-   * - O addToCart vem do contexto (CartContext), e o botão chama:
-   *     addToCart(id, nome, preco, imgUrl)
-   */
-  const { addToCart } = useCart();
-
-  const [produtos, setProdutos] = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [erro, setErro]         = useState("");
-
+export default function ProductList({ versao, usuario, abrirConta, favoritesOnly=false, onFavoritesOnly=()=>{} }) {
+  const {addToCart,cart} = useCart();
+  const [produtos,setProdutos] = useState([]);
+  const [loading,setLoading] = useState(true);
+  const [error,setError] = useState("");
+  const [retry,setRetry] = useState(0);
+  const [busca,setBusca] = useState("");
+  const [categoria,setCategoria] = useState("");
+  const [ordem,setOrdem] = useState("nome");
+  const [selected,setSelected] = useState(null);
+  const favorites=useFavorites(usuario,abrirConta);
+  const [compareIds,setCompareIds]=useState([]);
+  const [comparing,setComparing]=useState(false);
   useEffect(() => {
-    /*
-     * useEffect roda 1 vez quando o componente nasce (dependências: []).
-     * É aqui que acontece o “primeiro fetch” da loja.
-     *
-     * Fluxo didático:
-     * - montar → chama carregar()
-     * - carregar() faz uma chamada REST para o Spring (produtos/ativos)
-     * - se der certo → setProdutos(data)
-     * - setLoading(false) em finally
-     */
-    async function carregar() {
-      try {
-        /*
-         * Chamada de API (backend):
-         *   Método: GET
-         *   Rota:   http://localhost:8080/produtos/ativos
-         *
-         * O que a API devolve:
-         * - um array com produtos que estão com ativo=true.
-         */
-        const data = await listarProdutosAtivos();
-
-
-        // res.json() já vem como array na prática, mas garantimos.
-        setProdutos(Array.isArray(data) ? data : Array.from(data));
-      } catch {
-        setErro("Não foi possível carregar os produtos. Verifique se o servidor está rodando.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    carregar();
-  }, []);
-
-
-  if (loading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 20px", flexDirection: "column", gap: 16 }}>
-      <div style={{ width: 40, height: 40, border: "3px solid rgba(255,255,255,.08)", borderTop: "3px solid #ff416c", borderRadius: "50%", animation: "bbsSpin 0.8s linear infinite" }} />
-      <p style={{ color: "#555", fontFamily: "'Poppins',sans-serif" }}>Carregando produtos...</p>
-      <style>{`@keyframes bbsSpin { to { transform: rotate(360deg); } }`}</style>
+    let active = true;
+    listarProdutosAtivos().then(data => {if(active){setProdutos(data);setError("");}})
+      .catch(e => {if(active) setError(e.message);})
+      .finally(() => {if(active) setLoading(false);});
+    return () => {active=false;};
+  },[versao,retry]);
+  const source=favoritesOnly?favorites.items:produtos;
+  const comparisonSource=[...new Map([...favorites.items,...produtos].map(p=>[p.id,p])).values()];
+  const comparison=compareIds.map(id=>comparisonSource.find(p=>p.id===id)).filter(Boolean);
+  const {filtered,groups}=catalogView(source,busca,categoria,ordem);
+  const available=[...new Set(source.map(p=>p.tipo || "outros"))];
+  function comprar(p) { addToCart(p.id,p.nome,Number(p.preco),p.imgUrl || "",p.estoque);setSelected(null); }
+  function indisponivel(p) { return !p.ativo || p.estoque <= (cart[p.id]?.qty || 0); }
+  return <section id="produtos" aria-label="Catálogo">
+    <div className="sf-catalog-heading"><div><span className="sf-eyebrow">ESCOLHA SEU PRÓXIMO UPGRADE</span><h2>Explore o <span>hardware.</span></h2></div><p>Do primeiro componente ao setup completo.</p></div>
+    <div className="feature-tabs"><button aria-pressed={!favoritesOnly} onClick={()=>onFavoritesOnly(false)}>Todo o catálogo</button><button aria-pressed={favoritesOnly} onClick={()=>{onFavoritesOnly(true);setCategoria("");}}>♡ Meus favoritos {usuario?`(${favorites.items.length})`:""}</button></div>
+    {favoritesOnly && !usuario && <div className="bbs-notice"><p>Entre para acessar seus favoritos em qualquer dispositivo.</p><button onClick={abrirConta}>Entrar na minha conta</button></div>}
+    {favoritesOnly && favorites.loading && <p role="status">Carregando favoritos…</p>}
+    {favorites.error && <div role="alert" className="bbs-error">{favorites.error} <button onClick={favorites.retry}>Tentar carregar favoritos novamente</button></div>}
+    <div className="sf-category-nav" aria-label="Filtrar por categoria">
+      <button className={!categoria?"active":""} aria-pressed={!categoria} onClick={()=>setCategoria("")}><span className="sf-all-icon" aria-hidden="true">▦</span>Todo o catálogo</button>
+      {Object.entries(categories).filter(([id])=>available.includes(id)).map(([id,c])=><button key={id} className={categoria===id?"active":""} aria-pressed={categoria===id} onClick={()=>setCategoria(categoria===id?"":id)}><HardwareArt tipo={id}/>{c.name}</button>)}
     </div>
-  );
-
-  if (erro) return (
-    <div style={{ textAlign: "center", padding: "60px 20px", color: "#ff8fa0", fontFamily: "'Poppins',sans-serif" }}>
-      <p style={{ fontSize: "2.5rem" }}>⚠️</p>
-      <p>{erro}</p>
+    <div className="bbs-filters">
+      <label>Buscar produto<input type="search" placeholder="Nome ou descrição" value={busca} onChange={e => setBusca(e.target.value)}/></label>
+      <label>Categoria<select value={categoria} onChange={e => setCategoria(e.target.value)}><option value="">Todas</option>{available.map(c => <option key={c} value={c}>{cats[c]||(c==="outros"?"Outros":c)}</option>)}</select></label>
+      <label>Ordenar<select value={ordem} onChange={e => setOrdem(e.target.value)}><option value="nome">Nome A–Z</option><option value="preco">Menor preço</option><option value="maior">Maior preço</option></select></label>
     </div>
-  );
-
-  if (produtos.length === 0) return (
-    <div style={{ textAlign: "center", padding: "60px 20px", color: "#555", fontFamily: "'Poppins',sans-serif" }}>
-      <p style={{ fontSize: "2.5rem" }}>📦</p>
-      <p>Nenhum produto cadastrado ainda.</p>
-    </div>
-  );
-
-  const comTipo = produtos.filter(p => p.tipo);
-  const semTipo = produtos.filter(p => !p.tipo);
-  const categoriasCom = CATEGORIAS.filter(cat => comTipo.some(p => p.tipo === cat.id));
-
-  return (
-    <div className="categorias-wrap" id="produtos">
-      {categoriasCom.map(cat => (
-        <section key={cat.id} className="categoria-secao">
-          <div className="categoria-header">
-            <span className="cat-linha"></span>
-            <div className="cat-titulo-wrap">
-              <h2 className="cat-titulo">{cat.label}</h2>
-              <span className="cat-subtag">{cat.sub}</span>
-            </div>
-            <span className="cat-linha right"></span>
-          </div>
-          <div className="categoria-row-wrapper">
-            <div className="categoria-row">
-              {comTipo.filter(p => p.tipo === cat.id).map(produto => (
-                <ProdutoCard key={produto.id} produto={produto} addToCart={addToCart} />
-              ))}
-            </div>
-          </div>
-        </section>
-      ))}
-
-      {semTipo.length > 0 && (
-        <section className="categoria-secao">
-          <div className="categoria-header">
-            <span className="cat-linha"></span>
-            <div className="cat-titulo-wrap">
-              <h2 className="cat-titulo">Outros Produtos</h2>
-              <span className="cat-subtag">Hardware Premium · BBS Store</span>
-            </div>
-            <span className="cat-linha right"></span>
-          </div>
-          <div className="categoria-row-wrapper">
-            <div className="categoria-row">
-              {semTipo.map(produto => (
-                <ProdutoCard key={produto.id} produto={produto} addToCart={addToCart} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-    </div>
-  );
+    {loading ? <p className="bbs-info" role="status">Carregando catálogo…</p> : error ? <div className="bbs-info"><p className="bbs-error" role="alert">{error}</p><button onClick={() => {setLoading(true);setRetry(v => v+1);}}>Tentar novamente</button></div> : <>
+      <div className="sf-results"><p className="bbs-result-count" role="status">{filtered.length} produto(s) encontrado(s)</p>{(busca || categoria || ordem!=="nome") && <button onClick={()=>{setBusca("");setCategoria("");setOrdem("nome");}}>Limpar filtros ×</button>}</div>
+      {!filtered.length && <div className="sf-empty"><h3>{favoritesOnly?"Nenhum favorito encontrado.":"Nenhum produto por aqui."}</h3><p>{favoritesOnly?"Use o coração nos produtos para salvar na sua conta, ou limpe os filtros.":"Tente outro nome ou escolha uma categoria diferente."}</p></div>}
+      {groups.map(group=><section className="sf-category-section" key={group.id} style={{"--category-accent":group.accent}} aria-labelledby={`category-${group.id}`}>
+      <div className="sf-section-heading"><span className="sf-heading-line"/><div><h2 id={`category-${group.id}`}>{group.name}</h2><p>{group.tag}</p></div><span className="sf-heading-line"/></div>
+      <div className="bbs-product-grid">{group.items.map(p => <article className="bbs-product" key={p.id}>
+        <div className="feature-card-top"><span className={`sf-stock ${!p.ativo || p.estoque<=0?"unavailable":""}`}>{!p.ativo || p.estoque<=0?"Indisponível":p.estoque<=5?"Últimas unidades":"Disponível"}</span><button className="feature-heart" disabled={favorites.pending!==null || favorites.loading || Boolean(favorites.error)} aria-pressed={favorites.items.some(f=>f.id===p.id)} aria-label={`${favorites.items.some(f=>f.id===p.id)?"Remover dos":"Adicionar aos"} favoritos: ${p.nome}`} onClick={()=>favorites.toggle(p)}>{favorites.items.some(f=>f.id===p.id)?"♥":"♡"}</button></div>
+        <button className="bbs-product-image" onClick={() => setSelected(p)} aria-label={"Ver detalhes de "+p.nome}><ProductImage key={p.imgUrl} p={p}/></button>
+        <span className="bbs-product-category">{cats[p.tipo]||p.tipo||"Hardware"}</span>
+        <h3 title={p.nome}>{p.nome}</h3><p>{(p.descricao||"").slice(0,100)}</p><strong>{money(p.preco)}</strong>
+        <span>{p.estoque>0 ? p.estoque+" em estoque" : "Indisponível"}</span>
+        <button className="bbs-buy" disabled={indisponivel(p)} onClick={() => comprar(p)}>{indisponivel(p) ? "Limite de estoque" : "Adicionar ao carrinho"}</button>
+        <button className="bbs-details" onClick={() => setSelected(p)}>Ver detalhes</button>
+        <label className="feature-compare-check"><input type="checkbox" checked={compareIds.includes(p.id)} disabled={!compareIds.includes(p.id) && compareIds.length>=3} onChange={()=>setCompareIds(ids=>toggleComparison(ids,p.id))}/>Comparar produto</label>
+      </article>)}</div></section>)}
+    </>}
+    {selected && <Modal title={selected.nome} fechar={() => setSelected(null)}><div className="bbs-detail-image"><ProductImage p={selected}/></div><p>{selected.descricao||"Sem descrição adicional."}</p><p>Categoria: {cats[selected.tipo]||selected.tipo||"Hardware"} · Estoque: {selected.estoque}</p><h3>{money(selected.preco)}</h3><button className="bbs-primary" disabled={indisponivel(selected)} onClick={() => comprar(selected)}>Adicionar ao carrinho</button></Modal>}
+    {comparison.length>0 && <div className="feature-compare-bar"><span>{comparison.length}/3 selecionados</span><button disabled={comparison.length<2} onClick={()=>setComparing(true)}>Comparar</button><button onClick={()=>setCompareIds([])}>Limpar</button></div>}
+    {comparing && <Modal className="feature-comparison" title="Comparar produtos" fechar={()=>setComparing(false)}><p>Dados cadastrados no catálogo. Compare até três produtos; a descrição apresenta as especificações informadas.</p><div className="feature-table-scroll"><table><thead><tr><th>Característica</th>{comparison.map(p=><th key={p.id}>{p.nome}</th>)}</tr></thead><tbody>
+      <tr><th>Imagem</th>{comparison.map(p=><td key={p.id}><div className="feature-compare-image"><ProductImage p={p}/></div></td>)}</tr>
+      {[['Categoria',p=>cats[p.tipo]||p.tipo||'Não informada'],['Preço',p=>money(p.preco)],['Disponibilidade',p=>p.ativo&&p.estoque>0?`${p.estoque} em estoque`:'Indisponível'],['Descrição / especificações',p=>p.descricao||'Não informadas']].map(([label,value])=><tr key={label}><th>{label}</th>{comparison.map(p=><td key={p.id}>{value(p)}</td>)}</tr>)}
+      <tr><th>Comprar</th>{comparison.map(p=><td key={p.id}><button disabled={indisponivel(p)} onClick={()=>{comprar(p);setComparing(false);}}>Adicionar ao carrinho</button></td>)}</tr>
+    </tbody></table></div></Modal>}
+  </section>;
 }

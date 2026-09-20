@@ -68,8 +68,10 @@ public class Produto {
     // Nome exibido na UI e usado em busca por nome
     private String nome;
     // Descrição exibida e usada em busca por descrição
+    @jakarta.persistence.Column(length = 4000)
     private String descricao;
     // Preço do produto (BigDecimal para não perder precisão)
+    @jakarta.persistence.Column(precision = 16, scale = 2)
     private BigDecimal preco;
     // Quantidade disponível em estoque
     private Integer estoque;
