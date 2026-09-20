@@ -3,12 +3,20 @@
 ## Instalar no projeto existente
 
 1. Pare a API no Spring Tools e o Vite no VS Code. Guarde cópia dos arquivos que editou no PC e backup do banco.
-2. Extraia o pacote e copie **Front**, **Back**, **database** e **docs** para dentro de **tcc222**, mesclando e substituindo arquivos. Os caminhos continuam `tcc222/Front/bbs-react` e `tcc222/Back/bbs`. Não basta deixar o ZIP no projeto.
+2. Atualize a branch `codex/bbs-completo` pelo Git, conforme os comandos abaixo. Os caminhos continuam `tcc222/Front/bbs-react` e `tcc222/Back/bbs`. Se usar o ZIP da branch pelo GitHub, extraia e mescle Front, Back, database e docs; deixar o ZIP na pasta não atualiza o programa.
 3. No SSMS do mesmo servidor usado pela API, execute **database/03_atualizar_funcionalidades.sql** e depois **database/04_enderecos_clientes.sql**. Preserva contas, produtos e pedidos. Banco novo: primeiro execute o 01; o 02 é opcional para exemplos.
 4. No Spring Tools, selecione o projeto, pressione F5 e rode **BbsApplication → Run As → Spring Boot App**. Mantenha as variáveis de banco e administrador já configuradas.
 5. No VS Code, terminal em **Front/bbs-react**: `npm ci` e depois `npm run dev`. Abra **http://localhost:5173** e atualize com Ctrl+F5.
 
-A atualização também está na branch `codex/bbs-completo`. Com Git, execute `git fetch origin`, selecione a branch e `git pull --ff-only`. Preserve alterações locais antes; não use reset forçado.
+Na pasta `tcc222`, com suas alterações locais preservadas:
+
+```bash
+git fetch origin
+git switch codex/bbs-completo
+git pull --ff-only origin codex/bbs-completo
+```
+
+Se o Git avisar que há alterações ou divergência, preserve os arquivos e resolva o aviso; não use reset forçado. A versão com código validado é `4bd8fc4`; commits posteriores podem atualizar somente os guias.
 
 ## Funcionalidades
 
@@ -22,7 +30,7 @@ A atualização também está na branch `codex/bbs-completo`. Com Git, execute `
 | Admin | Painel, filtros, cadastro de cliente, CRUD/imagens, ativação e estoque baixo |
 | Mobile | Catálogo, favoritos, comparação, conta, carrinho, compra e pedidos em `/mobile` |
 
-Favoritos pertencem à conta. Comparação e limite visual de estoque baixo são controles da tela. Carrinho é local a cada navegador. Contas, favoritos, produtos, pedidos e histórico ficam no SQL Server; arquivos de imagens ficam nos uploads do backend.
+Favoritos pertencem à conta. Comparação e limite visual de estoque baixo são controles da tela. Carrinho é local a cada navegador. Contas, endereços, favoritos, produtos, pedidos e histórico ficam no SQL Server; arquivos de imagens ficam nos uploads do backend.
 
 ## Abrir no celular
 

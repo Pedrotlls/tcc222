@@ -8,7 +8,7 @@
 - [x] Cadastro de cliente pelo admin, CRUD/imagens e estoque baixo.
 - [x] Favoritos persistidos, comparação e interface mobile /mobile.
 - [x] Migrações SQL Server 01, 03 e 04 e roteiro de apresentação.
-- [ ] Anexar resultado desta versão no GitHub Actions em docs/VALIDACAO.md.
+- [x] Registrar frontend, backend e SQL Server aprovados em docs/VALIDACAO.md.
 - [ ] Confirmar acesso pelo celular na rede da escola.
 
 Pagamento real, transportadora real e publicação comercial não fazem parte da entrega acadêmica.
