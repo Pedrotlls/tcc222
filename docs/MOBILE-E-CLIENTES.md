@@ -4,7 +4,7 @@
 
 Copie as pastas Front e Back do pacote para dentro de tcc222, mesclando e substituindo os arquivos. Não exclua as pastas originais. Faça backup se você editou esses arquivos localmente. O pacote inclui os visuais anteriores para manter todas as dependências consistentes.
 
-Na versão completa atual, pare a API e execute **database/03_atualizar_funcionalidades.sql** no SSMS. O cadastro usa dbo.bbs_usuario; favoritos e histórico usam duas tabelas novas. Pressione F5 no projeto Spring Tools e rode BbsApplication. Consulte [ENTREGA-COMPLETA.md](ENTREGA-COMPLETA.md).
+Na versão completa atual, pare a API e execute as migrações ausentes **03_atualizar_funcionalidades.sql**, **04_enderecos_clientes.sql**, **05_tokens_autenticacao.sql** e **06_escopo_loja.sql**, nessa ordem, na pasta database pelo SSMS. Em banco novo, comece pelo 01. O cadastro usa dbo.bbs_usuario; favoritos e histórico usam duas tabelas novas. Pressione F5 no projeto Spring Tools e rode BbsApplication. Consulte [ENTREGA-COMPLETA.md](ENTREGA-COMPLETA.md).
 
 ## Abrir no computador
 

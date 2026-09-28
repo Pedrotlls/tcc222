@@ -3,7 +3,7 @@
 ## Atualizar no computador da escola
 
 1. Pare a API no Spring Tools e atualize a branch `codex/bbs-completo`.
-2. No SSMS, execute `database/05_tokens_autenticacao.sql`. Banco novo: 01, 03, 04 e 05, nessa ordem. O 02 só adiciona exemplos.
+2. No SSMS, execute `database/05_tokens_autenticacao.sql` e depois `database/06_escopo_loja.sql`. Banco novo: 01, 03, 04, 05 e 06, nessa ordem. O 02 só adiciona exemplos.
 3. Se as variáveis ainda não estiverem configuradas, copie `Back/bbs/application.properties.example` para `Back/bbs/application.properties`, ao lado de `pom.xml`. Preencha DB_URL, DB_USER e DB_PASSWORD. Não substitua o arquivo de `src/main/resources`.
 4. Para criar o primeiro administrador, preencha BBS_ADMIN_EMAIL e uma BBS_ADMIN_PASSWORD de 12 a 64 caracteres (até 72 bytes). Se a conta já existe, a senha do cadastro é mantida; a senha de criação não é reaplicada. Pode deixar BBS_ADMIN_PASSWORD vazio depois da criação.
 5. Run As → Spring Boot App. No frontend, `npm ci` se as dependências mudaram e `npm run dev`. Atualize o navegador. Faça login novamente depois desta atualização.

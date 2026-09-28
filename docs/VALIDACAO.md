@@ -2,20 +2,20 @@
 
 ## Resultado confirmado em 28/09/2026
 
-Execução aprovada: [GitHub Actions — 36403235681](https://github.com/Pedrotlls/tcc222/actions/runs/36403235681).
-Código validado: `f1140c2d1316efecadbb8b0a8639550c94b9477d`, branch `codex/bbs-completo`.
+Execução aprovada: [GitHub Actions — 36468985280](https://github.com/Pedrotlls/tcc222/actions/runs/36468985280).
+Código validado: `8f933925e4d9b30f7e7ba277c04044564db5bba1`, branch `codex/bbs-completo`.
 Alterações posteriores exclusivamente documentais não modificam esse código.
 
 | Verificação | Resultado | Alcance |
 | --- | --- | --- |
 | Frontend | Aprovado | 21 testes, ESLint e build Vite |
-| Backend | Aprovado | Java 17; 32 testes Maven com H2, sem falhas |
+| Backend | Aprovado | Java 17; 35 testes Maven com H2, sem falhas |
 | Migrações SQL Server | Aprovado | Scripts 01, 03, 04, 05 e 06, inclusive repetição |
 | API com SQL Server | Aprovado | Inicialização e validação do esquema real |
 | Navegador desktop e mobile | Aprovado | Chromium, desktop 1440×1000 e mobile 390×844 |
 | Persistência após reinício | Aprovado | Autenticação, carrinho, avaliações, uso do cupom e registros comerciais |
 
-O banco de teste foi um contêiner descartável SQL Server 2022 Developer no GitHub Actions. Não foi usado o banco da escola. O navegador chamou a API real, sem simular as respostas HTTP. A execução anterior `36402724714` também aprovou o escopo ampliado; a última inclui o ajuste de estado da sincronização ao sair da conta.
+O banco de teste foi um contêiner descartável SQL Server 2022 Developer no GitHub Actions. Não foi usado o banco da escola. O navegador chamou a API real, sem simular as respostas HTTP. A execução anterior `36402724714` também aprovou o escopo ampliado; a última inclui o ajuste de estado da sincronização ao sair da conta e a correção de desconexões SSE. A execução intermediária 36403693696 detectou um erro 500 após gravar o carrinho: o encerramento duplicado de uma conexão já fechada propagava uma exceção. O tratamento foi corrigido e três testes de regressão cobrem desconexão, emissão após encerramento e substituição da conexão mais antiga.
 
 ## Fluxos exercitados no navegador
 
