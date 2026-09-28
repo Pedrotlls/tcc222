@@ -53,3 +53,19 @@ test('erro de rede não repete a compra nem apaga a conta',async()=>{
   try {await assert.rejects((await api()).request('/pedidos',{method:'POST',body:{}}),/API indisponível/);assert.equal(calls,1);}
   finally {globalThis.fetch=original;}
 });
+test('refresh vencido pede login e não entra em repetição infinita',async()=>{
+  const original=globalThis.fetch, previousWindow=globalThis.window;let expired=0,calls=0;
+  globalThis.window={dispatchEvent:event=>{if(event.type==='bbs-session-expired')expired++;}};
+  globalThis.fetch=async(url)=>{
+    if(url.endsWith('/auth/session'))return response({csrf:'csrf',usuario:null,renovavel:true});
+    calls++;return response({},401);
+  };
+  try {await assert.rejects((await api()).request('/pedidos'),/Entre na sua conta/);assert.equal(expired,1);assert.equal(calls,2);}
+  finally {globalThis.fetch=original;globalThis.window=previousWindow;}
+});
+test('403 de permissão não repete uma operação administrativa',async()=>{
+  const original=globalThis.fetch;let calls=0;
+  globalThis.fetch=async()=>{calls++;return response({message:'Acesso negado.'},403);};
+  try {await assert.rejects((await api()).request('/admin/clientes'),/Acesso negado/);assert.equal(calls,1);}
+  finally {globalThis.fetch=original;}
+});

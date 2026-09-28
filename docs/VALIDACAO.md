@@ -57,4 +57,4 @@ Pagamentos e frete continuam acadêmicos. A interface mobile é web, não APK. T
 
 ## Atualização de tokens — 28/09/2026
 
-Implementados testes de validade, rotação, reuso, revogação, troca de senha, CSRF e isolamento de acessos. O teste SQL Server/mobile também verifica renovação no navegador e autenticação preservada após reinício. Os resultados da versão anterior acima não certificam esta alteração. Frontend local: 19 testes, lint e build aprovados. Backend local bloqueado por resolução DNS do Maven Central; validação completa desta versão será registrada após o CI.
+Implementados testes de validade, rotação, reuso, revogação, troca de senha, CSRF e isolamento de acessos. O teste SQL Server/mobile também verifica renovação no navegador e autenticação preservada após reinício. Os resultados da versão anterior acima não certificam esta alteração. Frontend local: 21 testes, lint e build aprovados. Backend local bloqueado por resolução DNS do Maven Central; validação completa desta versão será registrada após o CI.

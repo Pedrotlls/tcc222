@@ -8,7 +8,7 @@ Pedidos, frete e modalidades de pagamento são demonstrativos: não existe cobra
 
 Siga o [guia SQL Server + Spring Tools + VS Code](database/LEIA-ME.md).
 
-1. No SSMS, execute [01_criar_banco.sql](database/01_criar_banco.sql) e depois [03_atualizar_funcionalidades.sql](database/03_atualizar_funcionalidades.sql) e [04_enderecos_clientes.sql](database/04_enderecos_clientes.sql). Se o banco já funciona, pare a API e execute 03, 04 e [05_tokens_autenticacao.sql](database/05_tokens_autenticacao.sql).
+1. No SSMS, execute [01_criar_banco.sql](database/01_criar_banco.sql) e depois [03_atualizar_funcionalidades.sql](database/03_atualizar_funcionalidades.sql) e [04_enderecos_clientes.sql](database/04_enderecos_clientes.sql) e [05_tokens_autenticacao.sql](database/05_tokens_autenticacao.sql). Se o banco já funciona, pare a API e execute 03, 04 e [05_tokens_autenticacao.sql](database/05_tokens_autenticacao.sql).
 2. Opcional: execute [02_produtos_exemplo.sql](database/02_produtos_exemplo.sql).
 3. No Spring Tools, importe Back/bbs como Existing Maven Project.
 4. Configure DB_URL, DB_USER, DB_PASSWORD e as credenciais iniciais BBS_ADMIN_EMAIL/BBS_ADMIN_PASSWORD conforme o guia.

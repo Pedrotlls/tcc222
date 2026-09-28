@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.mock.web.MockHttpSession;
 import java.math.BigDecimal;
 import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -134,9 +133,9 @@ class CommerceTests {
         assertThat(usuarios.findByEmail("novo@teste.local").orElseThrow().senhaHash).startsWith("$2");
         var result=mvc.perform(post("/auth/login").with(csrf()).contentType("application/json").content(body))
             .andExpect(status().isOk()).andReturn();
-        MockHttpSession sess=(MockHttpSession)result.getRequest().getSession(false);
-        mvc.perform(get("/auth/session").session(sess)).andExpect(jsonPath("$.usuario.email").value("novo@teste.local"));
-        mvc.perform(post("/auth/logout").session(sess).with(csrf())).andExpect(status().isOk());
+        var cookies=result.getResponse().getCookies();
+        mvc.perform(get("/auth/session").cookie(cookies)).andExpect(jsonPath("$.usuario.email").value("novo@teste.local"));
+        mvc.perform(post("/auth/logout").cookie(cookies).with(csrf())).andExpect(status().isOk());
     }
     @Test void administradorValidaProdutoEStatus() throws Exception {
         mvc.perform(post("/produtos").with(user("admin").roles("ADMIN")).with(csrf())
