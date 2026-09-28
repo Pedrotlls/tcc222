@@ -8,7 +8,7 @@ Pedidos, frete e modalidades de pagamento são demonstrativos: não existe cobra
 
 Siga o [guia SQL Server + Spring Tools + VS Code](database/LEIA-ME.md).
 
-1. No SSMS, execute [01_criar_banco.sql](database/01_criar_banco.sql) e depois [03_atualizar_funcionalidades.sql](database/03_atualizar_funcionalidades.sql) e [04_enderecos_clientes.sql](database/04_enderecos_clientes.sql) e [05_tokens_autenticacao.sql](database/05_tokens_autenticacao.sql). Se o banco já funciona, pare a API e execute 03, 04 e [05_tokens_autenticacao.sql](database/05_tokens_autenticacao.sql).
+1. No SSMS, execute [01_criar_banco.sql](database/01_criar_banco.sql) e depois [03_atualizar_funcionalidades.sql](database/03_atualizar_funcionalidades.sql) e [04_enderecos_clientes.sql](database/04_enderecos_clientes.sql) e [05_tokens_autenticacao.sql](database/05_tokens_autenticacao.sql) e [06_escopo_loja.sql](database/06_escopo_loja.sql). Se o banco já funciona, pare a API e execute 03, 04 e [05_tokens_autenticacao.sql](database/05_tokens_autenticacao.sql) e [06_escopo_loja.sql](database/06_escopo_loja.sql).
 2. Opcional: execute [02_produtos_exemplo.sql](database/02_produtos_exemplo.sql).
 3. No Spring Tools, importe Back/bbs como Existing Maven Project.
 4. Configure DB_URL, DB_USER, DB_PASSWORD e as credenciais iniciais BBS_ADMIN_EMAIL/BBS_ADMIN_PASSWORD conforme o guia.
@@ -92,3 +92,7 @@ Com a API parada, execute `database/04_enderecos_clientes.sql` depois do 03, inc
 ## Autenticação por tokens
 
 Execute também `database/05_tokens_autenticacao.sql` antes de iniciar esta versão. Tokens expiram, são renovados automaticamente e podem ser revogados em **Minha conta → Acessos e segurança**. Guia: [TOKENS.md](docs/TOKENS.md). Configuração local portátil: copie `Back/bbs/application.properties.example` para `Back/bbs/application.properties` e preencha os dados do SQL Server.
+
+## Escopo ampliado
+
+Marcas, preço máximo, sugestões de busca, avaliações de compradores, cupons administrativos, CPF opcional validado e código de acompanhamento interno. O carrinho da conta agora é compartilhado entre desktop e mobile, com notificações SSE. Execute também `database/06_escopo_loja.sql`. Regras e limites: [ESCOPO-ATUAL.md](docs/ESCOPO-ATUAL.md).

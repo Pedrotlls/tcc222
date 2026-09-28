@@ -27,7 +27,7 @@ class CommerceTests {
     @Autowired CompraRepository compras;
     Integer produtoId;
     @BeforeEach void dados() {
-        jdbc.update("DELETE FROM bbs_sessao_token");jdbc.update("DELETE FROM bbs_endereco");compras.deleteAll();usuarios.deleteAll();produtos.deleteAll();
+        jdbc.update("DELETE FROM bbs_avaliacao");jdbc.update("DELETE FROM bbs_carrinho_item");jdbc.update("DELETE FROM bbs_cupom");jdbc.update("DELETE FROM bbs_sessao_token");jdbc.update("DELETE FROM bbs_endereco");compras.deleteAll();usuarios.deleteAll();produtos.deleteAll();
         Usuario u=new Usuario();u.nome="Cliente teste";u.email="cliente@teste.local";u.senhaHash="hash-nao-utilizado";
         usuarios.save(u);
         Produto p=new Produto();p.setNome("SSD teste");p.setPreco(new BigDecimal("100.00"));p.setEstoque(2);p.setTipo("ssd");
@@ -198,4 +198,56 @@ class CommerceTests {
         mvc.perform(get("/enderecos").with(user("cliente@teste.local"))).andExpect(jsonPath("$.length()").value(10));
     }
 
+
+    String cupom(String codigo,int limite) throws Exception {
+        return json.writeValueAsString(Map.of("codigo",codigo,"percentual",20,"limiteUsos",limite,"validade",java.time.LocalDateTime.now(java.time.ZoneOffset.UTC).plusDays(1).toString()));
+    }
+    String pedidoCupom(String chave,String codigo) throws Exception {
+        var node=(com.fasterxml.jackson.databind.node.ObjectNode)json.readTree(pedido(1,chave));node.put("cupom",codigo);return node.toString();
+    }
+    @Test void cupomValidaPermissaoValidadeLimiteEIdempotencia() throws Exception {
+        mvc.perform(post("/admin/cupons").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(cupom("BBS20",1))).andExpect(status().isForbidden());
+        mvc.perform(post("/admin/cupons").with(user("admin").roles("ADMIN")).with(csrf()).contentType("application/json").content(cupom("BBS20",1))).andExpect(status().isCreated());
+        String body=pedidoCupom("pedido-cupom-1","bbs20");
+        mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(body))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.total").value(94.90)).andExpect(jsonPath("$.desconto").value(20)).andExpect(jsonPath("$.acompanhamento").isString());
+        mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(body)).andExpect(status().isCreated());
+        assertThat(jdbc.queryForObject("select usos from bbs_cupom where codigo='BBS20'",Integer.class)).isEqualTo(1);
+        mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(pedidoCupom("pedido-cupom-2","BBS20"))).andExpect(status().isBadRequest());
+        assertThat(produtos.findById(produtoId).orElseThrow().getEstoque()).isEqualTo(1);
+        assertThat(compras.count()).isEqualTo(1);
+        jdbc.update("update bbs_cupom set validade=?",java.time.LocalDateTime.now(java.time.ZoneOffset.UTC).minusDays(1));
+        mvc.perform(post("/cupons/cotar").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(json.writeValueAsString(Map.of("codigo","BBS20","itens",List.of(Map.of("produtoId",produtoId,"quantidade",1)))))).andExpect(status().isBadRequest());
+    }
+    @Test void carrinhoCompartilhaContaIsolaUsuariosELimpaNaCompra() throws Exception {
+        String linha=json.writeValueAsString(Map.of("produtoId",produtoId,"delta",1));
+        mvc.perform(patch("/carrinho").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(linha)).andExpect(status().isOk()).andExpect(jsonPath("$.versao").value(1));
+        mvc.perform(get("/carrinho").with(user("cliente@teste.local"))).andExpect(jsonPath("$.itens['"+produtoId+"'].qty").value(1)).andExpect(jsonPath("$.itens['"+produtoId+"'].price").value(100));
+        mvc.perform(patch("/carrinho").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(linha)).andExpect(status().isOk());
+        mvc.perform(patch("/carrinho").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(linha)).andExpect(status().isBadRequest());
+        Usuario outro=new Usuario();outro.nome="Outro";outro.email="outro@teste.local";outro.senhaHash="hash";usuarios.save(outro);
+        mvc.perform(get("/carrinho").with(user(outro.email))).andExpect(jsonPath("$.itens").isEmpty());
+        mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(pedido(2,"pedido-cart-1"))).andExpect(status().isCreated());
+        mvc.perform(get("/carrinho").with(user("cliente@teste.local"))).andExpect(jsonPath("$.itens").isEmpty());
+    }
+    @Test void importarCarrinhoNaoDuplicaEIgnoraPrecosDoNavegador() throws Exception {
+        String body="[{\"produtoId\":"+produtoId+",\"quantidade\":2,\"preco\":0}]";
+        for(int i=0;i<2;i++)mvc.perform(post("/carrinho/importar").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(body))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.itens['"+produtoId+"'].qty").value(2)).andExpect(jsonPath("$.itens['"+produtoId+"'].price").value(100));
+    }
+    @Test void avaliacaoExigeCompraEEUmaPorClienteProduto() throws Exception {
+        String body="{\"nota\":5,\"comentario\":\"Muito bom\"}";
+        mvc.perform(put("/avaliacoes/"+produtoId).with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(body)).andExpect(status().isForbidden());
+        mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(pedido(1,"pedido-review-1"))).andExpect(status().isCreated());
+        for(int i=0;i<2;i++)mvc.perform(put("/avaliacoes/"+produtoId).with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(body)).andExpect(status().isOk());
+        mvc.perform(get("/avaliacoes/"+produtoId)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].nota").value(5)).andExpect(jsonPath("$[0].usuarioId").doesNotExist());
+        mvc.perform(put("/avaliacoes/"+produtoId).with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(body.replace(":5",":6"))).andExpect(status().isBadRequest());
+    }
+    @Test void cpfValidaDigitosENaoVazaNaResposta() throws Exception {
+        String body="{\"nome\":\"Teste CPF\",\"email\":\"cpf@teste.local\",\"senha\":\"TesteSeguro123\",\"cpf\":\"111.111.111-11\"}";
+        mvc.perform(post("/auth/registro").with(csrf()).contentType("application/json").content(body)).andExpect(status().isBadRequest());
+        mvc.perform(post("/auth/registro").with(csrf()).contentType("application/json").content(body.replace("111.111.111-11","529.982.247-25")))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.cpf").doesNotExist());
+        assertThat(usuarios.findByEmail("cpf@teste.local").orElseThrow().cpf).isEqualTo("52998224725");
+    }
 }

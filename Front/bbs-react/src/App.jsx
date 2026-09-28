@@ -10,8 +10,10 @@ import "./commerce.css";
 import "./storefront.css";
 import HardwareArt from "./components/HardwareArt";
 import MobileHome from "./components/MobileHome";
+import { useCart } from "./context/CartContext";
 
 export default function App() {
+  const {sincronizarUsuario}=useCart();
   const mobile = window.location.pathname.replace(/\/$/, "") === "/mobile";
   const [usuario, setUsuario] = useState(null);
   const [retomarCompra,setRetomarCompra] = useState(false);
@@ -27,6 +29,7 @@ export default function App() {
     window.addEventListener("bbs-session-expired", expired);
     return () => {active=false;window.removeEventListener("bbs-session-expired",expired);};
   }, []);
+  useEffect(()=>{sincronizarUsuario(usuario?.id || null);},[usuario?.id,sincronizarUsuario]);
   function checkout() {
     if(!usuario) {setRetomarCompra(true);setAviso("Entre ou crie uma conta. Seu carrinho será mantido.");setScreen("conta");}
     else setScreen("checkout");

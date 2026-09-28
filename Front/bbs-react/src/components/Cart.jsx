@@ -18,7 +18,7 @@ export default function Cart({ abrirCheckout }) {
     changeQty,      // Função para incrementar/decrementar quantidade
     subtotal,       // Total dos produtos; frete ainda não cotado
     isOpen,         // Sidebar visível (true) ou oculta (false)
-    setIsOpen,
+    setIsOpen, syncError, syncBusy, reload,
   } = useCart();
 
   return (
@@ -58,6 +58,8 @@ export default function Cart({ abrirCheckout }) {
 
         {/* ── Lista de itens ──────────────────────────────────
             Scroll vertical independente para não travar o footer */}
+        {syncError && <p className="bbs-error" role="alert">{syncError}<button onClick={reload}>Tentar sincronizar</button></p>}
+        {syncBusy && <p role="status">Sincronizando carrinho…</p>}
         <div className="cart-items-list" id="cart-items">
           {cartOrder.length === 0 ? (
             // Mensagem quando o carrinho está vazio
@@ -122,6 +124,7 @@ export default function Cart({ abrirCheckout }) {
           {/* Botão Finalizar Pedido: fecha a sidebar e abre o Checkout.
               btn-buy → classe CSS do index.css com gradiente e hover animado. */}
           <button
+            disabled={syncBusy}
             className="btn-buy"
             onClick={() => {
               if (cartOrder.length === 0) {

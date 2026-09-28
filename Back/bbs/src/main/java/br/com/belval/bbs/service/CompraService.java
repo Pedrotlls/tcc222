@@ -16,13 +16,15 @@ public class CompraService {
     private final UsuarioRepository usuarios;
     private final FreteService fretes;
     private final EnderecoService enderecos;
+    private final CupomService cupons;
+    private final CarrinhoService carrinhos;
     @PersistenceContext private EntityManager em;
-    public CompraService(CompraRepository compras, UsuarioRepository usuarios, FreteService fretes, EnderecoService enderecos) {
-        this.compras=compras; this.usuarios=usuarios; this.fretes=fretes; this.enderecos=enderecos;
+    public CompraService(CompraRepository compras, UsuarioRepository usuarios, FreteService fretes, EnderecoService enderecos, CupomService cupons, CarrinhoService carrinhos) {
+        this.compras=compras; this.usuarios=usuarios; this.fretes=fretes; this.enderecos=enderecos;this.cupons=cupons;this.carrinhos=carrinhos;
     }
     public record Linha(Integer produtoId, Integer quantidade) {}
     public record Endereco(String cep,String rua,String numero,String complemento,String bairro,String cidade,String uf) {}
-    public record Pedido(List<Linha> itens, Endereco endereco, String entrega, String pagamento, String chave, Long enderecoId) {}
+    public record Pedido(List<Linha> itens, Endereco endereco, String entrega, String pagamento, String chave, Long enderecoId, String cupom) {}
     public Usuario usuario(String email) {
         return usuarios.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
     }
@@ -57,7 +59,7 @@ public class CompraService {
             (e.complemento()!=null && e.complemento().length()>100))
             throw erro("Preencha um endereco valido, com CEP, rua, numero, bairro, cidade e UF.");
         Compra c=new Compra(); c.usuarioId=user.id; c.clienteNome=user.nome; c.clienteEmail=user.email;
-        c.chave=pedido.chave(); c.criadoEm=LocalDateTime.now(); c.status="RECEBIDO";
+        c.acompanhamento=UUID.randomUUID().toString();c.chave=pedido.chave(); c.criadoEm=LocalDateTime.now(); c.status="RECEBIDO";
         c.historico.add(new Compra.Evento(c.status,"CLIENTE",c.criadoEm));
         c.pagamento=pedido.pagamento(); c.entrega=pedido.entrega();
         c.endereco=e.rua()+", "+e.numero()+" "+Objects.toString(e.complemento(),"")+" — "+e.bairro()+", "+e.cidade()+"/"+e.uf()+" — "+e.cep();
@@ -84,6 +86,10 @@ public class CompraService {
         c.frete=fretes.calcular(c.subtotal,quantidadeTotal,e.uf(),pedido.entrega()).valor();
         BigDecimal taxa=new BigDecimal(pedido.pagamento().equals("pix")?"0.10":pedido.pagamento().equals("boleto")?"0.07":"0");
         c.desconto=c.subtotal.multiply(taxa).setScale(2,RoundingMode.HALF_UP);
+        if(pedido.cupom()!=null && !pedido.cupom().isBlank()){
+            c.cupom=CupomService.normalizar(pedido.cupom());c.desconto=cupons.desconto(c.cupom,c.subtotal,true);
+        }
+        carrinhos.limpar(user.id);
         c.total=c.subtotal.add(c.frete).subtract(c.desconto).setScale(2,RoundingMode.HALF_UP);
         return compras.save(c);
     }

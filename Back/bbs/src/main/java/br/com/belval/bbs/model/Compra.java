@@ -13,6 +13,8 @@ public class Compra {
     public String clienteEmail;
     public LocalDateTime criadoEm;
     public String status;
+    @Column(length=30) public String cupom;
+    @Column(length=36,unique=true) public String acompanhamento;
     public String pagamento;
     public String entrega;
     @Column(length=600) public String endereco;

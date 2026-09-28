@@ -291,6 +291,7 @@ public class ProdutoController {
         // Remove referências da lista de desejos ao excluir produto sem pedidos.
         entityManager.createNativeQuery("DELETE FROM bbs_favorito WHERE produto_id = :id")
             .setParameter("id",id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM bbs_carrinho_item WHERE produto_id = :id").setParameter("id",id).executeUpdate();
         repository.deleteById(id);
         return ResponseEntity.ok("Produto apagado com sucesso!");
     }
@@ -330,6 +331,7 @@ public class ProdutoController {
             @RequestParam("preco") BigDecimal preco,
             @RequestParam(value = "estoque", defaultValue = "0") Integer estoque,
             @RequestParam(value = "tipo", defaultValue = "") String tipo,
+            @RequestParam(value = "marca", defaultValue = "") String marca,
             @RequestParam(value = "ativo", defaultValue = "true") Boolean ativo) {
 
         try {
@@ -341,6 +343,7 @@ public class ProdutoController {
             produto.setPreco(preco);
             produto.setEstoque(estoque);
             produto.setTipo(tipo.isBlank() ? null : tipo);
+            produto.setMarca(marca.trim());
             produto.setAtivo(ativo);
             produto.setImgUrl(urlImagem);
             produto.setDataCriacao(LocalDateTime.now());
@@ -372,6 +375,7 @@ public class ProdutoController {
             @RequestParam("preco") BigDecimal preco,
             @RequestParam(value = "estoque", defaultValue = "0") Integer estoque,
             @RequestParam(value = "tipo", defaultValue = "") String tipo,
+            @RequestParam(value = "marca", defaultValue = "") String marca,
             @RequestParam(value = "ativo", defaultValue = "true") Boolean ativo) {
 
         Optional<Produto> produtoOpt = Optional.ofNullable(entityManager.find(Produto.class, id, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE));
@@ -388,6 +392,7 @@ public class ProdutoController {
             produto.setPreco(preco);
             produto.setEstoque(estoque);
             produto.setTipo(tipo.isBlank() ? null : tipo);
+            produto.setMarca(marca.trim());
             produto.setAtivo(ativo);
             produto.setImgUrl(urlImagem);
 
@@ -439,7 +444,7 @@ public class ProdutoController {
             p.getPreco()==null || p.getPreco().signum()<=0 || p.getPreco().scale()>2 ||
             p.getPreco().compareTo(new BigDecimal("99999999.99"))>0 ||
             p.getEstoque()==null || p.getEstoque()<0 || p.getEstoque()>1000000 ||
-            p.getTipo()!=null && p.getTipo().length()>50)
+            p.getTipo()!=null && p.getTipo().length()>50 || p.getMarca()!=null && p.getMarca().length()>80)
             throw erro("Confira nome, descricao, preco positivo (2 casas decimais) e estoque inteiro nao negativo.");
         String url=p.getImgUrl();
         if(url!=null && !url.isBlank() && !(url.startsWith("/api/imagens/") || url.startsWith("https://") ||

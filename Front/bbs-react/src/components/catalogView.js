@@ -16,7 +16,7 @@ export const categories = {
 
 export function catalogView(products, search, category, order) {
   const filtered = products.filter(p => (!category || (p.tipo || "outros") === category) &&
-    `${p.nome} ${p.descricao || ""}`.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR")))
+    `${p.nome} ${p.marca || ""} ${p.descricao || ""}`.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR")))
     .sort((a,b) => order === "preco" ? a.preco-b.preco : order === "maior" ? b.preco-a.preco : a.nome.localeCompare(b.nome,"pt-BR"));
   // Ao ordenar por preço, uma lista única mantém a ordem global solicitada.
   if (order !== "nome" && !category) return {filtered,groups:[{id:"resultados",name:"Seu próximo upgrade",tag:"CATÁLOGO · POR PREÇO",accent:"#ff526c",items:filtered}]};

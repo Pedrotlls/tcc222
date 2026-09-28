@@ -17,7 +17,7 @@ public class CadastroClienteService {
     public CadastroClienteService(UsuarioRepository usuarios, PasswordEncoder encoder) {
         this.usuarios = usuarios; this.encoder = encoder;
     }
-    public Usuario criar(String nome, String email, String senha) {
+    public Usuario criar(String nome, String email, String senha, String cpf) {
         if (nome == null || nome.trim().length() < 2 || nome.length() > 100)
             throw erro("Informe um nome de 2 a 100 caracteres.");
         if (email == null || email.length() > 150 || !email.trim().matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+"))
@@ -27,7 +27,7 @@ public class CadastroClienteService {
         String normalized = email.trim().toLowerCase(Locale.ROOT);
         if (usuarios.findByEmail(normalized).isPresent()) throw erro("E-mail indisponível para cadastro.");
         Usuario u = new Usuario(); u.nome = nome.trim(); u.email = normalized;
-        u.perfil = "CLIENTE"; u.senhaHash = encoder.encode(senha);
+        u.cpf=Cpf.validar(cpf);u.perfil = "CLIENTE"; u.senhaHash = encoder.encode(senha);
         try { return usuarios.saveAndFlush(u); }
         catch (DataIntegrityViolationException e) { throw erro("Não foi possível cadastrar. Confira os dados e se o e-mail já está em uso."); }
     }

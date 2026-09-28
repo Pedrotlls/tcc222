@@ -29,13 +29,23 @@ export default function Checkout({ fechar, onComplete }) {
   }, []);
   const [entrega, setEntrega] = useState("normal");
   const [pagamento, setPagamento] = useState("pix");
+  const [codigoCupom,setCodigoCupom]=useState("");
+  const [cupom,setCupom]=useState(null);
   const [cotacao, setCotacao] = useState(null);
   const [busy, setBusy] = useState(false);
   const [pedido, setPedido] = useState(null);
   const [chave] = useState(() => criarChavePedido());
   const lock = useRef(false);
-  const totais = calcularTotais(subtotal, cotacao?.valor, pagamento);
+  const baseTotais = calcularTotais(subtotal, cotacao?.valor, pagamento);
   const itens = cartOrder.filter(id => cart[id]).map(id => ({produtoId:Number(id),quantidade:cart[id].qty}));
+  const cartKey=JSON.stringify(itens)+subtotal;
+  const cupomValido=cupom?.cartKey===cartKey?cupom:null;
+  const totais=cupomValido?{...baseTotais,desconto:Number(cupomValido.desconto),total:Math.round((subtotal+baseTotais.frete-Number(cupomValido.desconto))*100)/100}:baseTotais;
+  async function aplicarCupom(){
+    setBusy(true);setError("");setCupom(null);
+    try{const data=await request("/cupons/cotar",{method:"POST",body:{codigo:codigoCupom,itens}});setCupom({...data,cartKey});}
+    catch(e){setError(e.message);}finally{setBusy(false);}
+  }
   function campo(key, label, maxLength, minLength = 1) {
     return <label>{label}<input readOnly={Boolean(enderecoId)} value={endereco[key]} maxLength={maxLength} minLength={minLength} required={key !== "complemento"}
       onChange={e => {setEndereco({...endereco,[key]:key === "uf" ? e.target.value.toUpperCase() : e.target.value});setCotacao(null);}} /></label>;
@@ -71,7 +81,7 @@ export default function Checkout({ fechar, onComplete }) {
     lock.current = true;setBusy(true);setError("");
     try {
       const result = await request("/pedidos", {method:"POST",body:{
-        chave, entrega, pagamento, enderecoId:enderecoId?Number(enderecoId):null, endereco:{...endereco,cep:endereco.cep.replace(/\D/g,"")},
+        chave, entrega, pagamento, cupom:cupomValido?.codigo || null, enderecoId:enderecoId?Number(enderecoId):null, endereco:{...endereco,cep:endereco.cep.replace(/\D/g,"")},
         itens
       }});
       setPedido(result); limparCarrinho(); onComplete();
@@ -85,7 +95,7 @@ export default function Checkout({ fechar, onComplete }) {
     </ol>
     <p className="ck-demo">DEMONSTRAÇÃO ACADÊMICA · Sem cobrança real. Não informe dados bancários.</p>
     {error && <p role="alert" className="bbs-error">{error}</p>}
-    {pedido ? <section className="ck-success ck-card" role="status"><div className="ck-success-icon">✓</div><h2>Pedido registrado!</h2><p>Seu pedido foi salvo e o estoque foi atualizado.</p><strong className="ck-order-code">PEDIDO #{pedido.id}</strong><h3>{fmt(pedido.total)}</h3><p>Acompanhe o status em Minha conta. Nenhum pagamento foi realizado.</p><button className="ck-next" onClick={fechar}>Voltar à loja</button></section> :
+    {pedido ? <section className="ck-success ck-card" role="status"><div className="ck-success-icon">✓</div><h2>Pedido registrado!</h2><p>Seu pedido foi salvo e o estoque foi atualizado.</p><strong className="ck-order-code">PEDIDO #{pedido.id}</strong><h3>{fmt(pedido.total)}</h3><p className="order-code">Código de acompanhamento: {pedido.acompanhamento}</p><p>Acompanhe o status em Minha conta. Nenhum pagamento foi realizado.</p><button className="ck-next" onClick={fechar}>Voltar à loja</button></section> :
     itens.length === 0 ? <section className="ck-card"><h2>Seu carrinho está vazio</h2><button className="ck-next" onClick={fechar}>Voltar à loja</button></section> :
     <div className="ck-layout">
       <div className="ck-main">
@@ -131,8 +141,9 @@ export default function Checkout({ fechar, onComplete }) {
         </>}
       </div>
       <aside className="ck-summary ck-card" aria-label="Resumo do pedido"><h2 className="ck-title">Resumo do pedido</h2>
+        <div className="checkout-coupon"><label>Cupom de desconto<input value={codigoCupom} maxLength={30} onChange={e=>{setCodigoCupom(e.target.value);setCupom(null);}} placeholder="Código do cupom"/></label><button type="button" disabled={busy || !codigoCupom.trim()} onClick={aplicarCupom}>Aplicar cupom</button>{cupomValido && <p role="status">{cupomValido.codigo} aplicado · substitui o desconto da modalidade.<button onClick={()=>{setCupom(null);setCodigoCupom("");}}>Remover cupom</button></p>}</div>
         {cartOrder.filter(id => cart[id]).map(id => <div className="ck-summary-item" key={id}><span>{cart[id].name} ×{cart[id].qty}</span><span>{fmt(cart[id].price*cart[id].qty)}</span></div>)}
-        <dl><div><dt>Subtotal</dt><dd>{fmt(subtotal)}</dd></div><div><dt>Frete</dt><dd>{!cotacao?"A calcular":cotacao.gratis?"Grátis":fmt(totais.frete)}</dd></div><div className="ck-discount"><dt>Desconto {pagamento==="pix"?"PIX":pagamento==="boleto"?"boleto":""}</dt><dd>−{fmt(totais.desconto)}</dd></div><div className="ck-total"><dt>Total estimado</dt><dd>{fmt(totais.total)}</dd></div></dl>
+        <dl><div><dt>Subtotal</dt><dd>{fmt(subtotal)}</dd></div><div><dt>Frete</dt><dd>{!cotacao?"A calcular":cotacao.gratis?"Grátis":fmt(totais.frete)}</dd></div><div className="ck-discount"><dt>Desconto {cupomValido?cupomValido.codigo:pagamento==="pix"?"PIX":pagamento==="boleto"?"boleto":""}</dt><dd>−{fmt(totais.desconto)}</dd></div><div className="ck-total"><dt>Total estimado</dt><dd>{fmt(totais.total)}</dd></div></dl>
         {!cotacao && <p className="ck-muted">Frete ainda não incluído.</p>}
         {totais.desconto>0 && <p className="ck-saving">Você economiza <b>{fmt(totais.desconto)}</b> nesta modalidade.</p>}
         <p className="ck-muted">Preços e estoque confirmados pelo servidor ao registrar o pedido.</p>

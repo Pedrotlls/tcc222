@@ -15,5 +15,7 @@ public class Usuario {
     @CollectionTable(name = "bbs_favorito", joinColumns = @JoinColumn(name = "usuario_id"))
     @Column(name = "produto_id", nullable = false)
     public java.util.Set<Integer> favoritos = new java.util.HashSet<>();
+    @JsonIgnore @Column(length=11) public String cpf;
+    @JsonIgnore @Column(nullable=false) public long carrinhoVersao;
     public Usuario() {}
 }

@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.*;
 public class AdminClienteController {
     private final CadastroClienteService cadastro;
     public AdminClienteController(CadastroClienteService cadastro) { this.cadastro = cadastro; }
-    public record NovoCliente(String nome, String email, String senha) {}
+    public record NovoCliente(String nome, String email, String senha, String cpf) {}
     @PostMapping @ResponseStatus(HttpStatus.CREATED)
     public Usuario criar(@RequestBody NovoCliente cliente) {
         // Não autentica o cliente nem substitui a sessão do administrador.
-        return cadastro.criar(cliente.nome(),cliente.email(),cliente.senha());
+        return cadastro.criar(cliente.nome(),cliente.email(),cliente.senha(),cliente.cpf());
     }
 }

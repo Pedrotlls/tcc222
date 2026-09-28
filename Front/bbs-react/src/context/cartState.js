@@ -1,5 +1,6 @@
 // Carrinho e um rascunho local; precos/estoque finais sao sempre validados na API.
 export function cartReducer(cart, action) {
+  if(action.type === "replace") return action.cart;
   if(action.type === "clear") return {};
   const id = String(action.id);
   if(action.type === "add") {

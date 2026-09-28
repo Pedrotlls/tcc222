@@ -40,6 +40,9 @@ async function verifyPersistence() {
   assert.equal((await api(ctx, '/auth/session')).usuario.email,saved.email);
   try {
     await loginApi(ctx, saved.email, password);
+    const carrinho=await api(ctx,'/carrinho');
+    assert.equal(carrinho.itens[saved.carrinhoProdutoId].qty,1);
+    assert.equal((await api(ctx,'/avaliacoes/'+saved.produtoId)).length,1);
     const enderecos = await api(ctx, '/enderecos');
     assert(enderecos.some(e => e.id === saved.enderecoId && e.principal));
     const favoritos = await api(ctx, '/favoritos');
@@ -53,6 +56,7 @@ async function verifyPersistence() {
     assert.equal(pedidos.find(p => p.id === saved.canceladoId).status, 'CANCELADO');
     await loginApi(ctx, adminEmail, adminPassword);
     assert.equal((await api(ctx, '/produtos/' + saved.produtoId)).estoque, 4);
+    assert.equal((await api(ctx,'/admin/cupons')).find(c=>c.codigo==='BBS-E2E').usos,1);
     console.log('PASS: contas, favoritos, pedidos, histórico e estoque preservados após repetir a migração e reiniciar a API SQL Server.');
   } finally { await ctx.dispose(); }
 }
@@ -66,17 +70,25 @@ async function run() {
     phone = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     for (const page of [desktop, phone]) { page.setDefaultTimeout(15000); page.on('pageerror', e => errors.push(e.message)); }
     await loginUi(desktop, adminEmail, adminPassword);
+    await desktop.getByRole('button',{name:'Cupons de desconto',exact:true}).click();
+    await desktop.getByLabel('Código do cupom',{exact:true}).fill('BBS-E2E');
+    await desktop.getByLabel('Desconto percentual',{exact:true}).fill('20');
+    await desktop.getByLabel('Limite de usos',{exact:true}).fill('1');
+    await desktop.getByLabel('Válido até',{exact:true}).fill(new Date(Date.now()+86400000).toISOString().slice(0,16));
+    await desktop.getByRole('button',{name:'Cadastrar cupom',exact:true}).click();
+    await desktop.getByRole('cell',{name:'BBS-E2E',exact:true}).waitFor();
     const email = `mobile-${Date.now()}@teste.local`;
     await desktop.getByRole('button', { name: 'Clientes e usuários', exact: true }).click();
     await desktop.getByRole('button', { name: '+ Cadastrar cliente', exact: true }).click();
     const clienteForm = desktop.getByRole('dialog', { name: 'Cadastrar cliente', exact: true });
     await clienteForm.getByLabel('Nome', { exact: true }).fill('Cliente Mobile');
+    await clienteForm.getByLabel('CPF (opcional)',{exact:true}).fill('529.982.247-25');
     await clienteForm.getByLabel('E-mail', { exact: true }).fill(email);
     await clienteForm.getByLabel('Senha inicial', { exact: true }).fill(password);
     await clienteForm.getByRole('button', { name: 'Cadastrar cliente', exact: true }).click();
     await desktop.getByRole('cell', { name: email, exact: true }).waitFor();
     assert.equal((await api(desktop.request, '/auth/session')).usuario.perfil, 'ADMIN');
-    const p1 = await api(desktop.request, '/produtos', 'POST', { nome: 'SSD NVMe E2E', descricao: 'SSD de teste, 1 TB, conexão NVMe.', tipo: 'ssd', preco: 399.90, estoque: 5, ativo: true });
+    const p1 = await api(desktop.request, '/produtos', 'POST', { nome: 'SSD NVMe E2E', marca:'BBS Teste', descricao: 'SSD de teste, 1 TB, conexão NVMe.', tipo: 'ssd', preco: 399.90, estoque: 5, ativo: true });
     const p2 = await api(desktop.request, '/produtos', 'POST', { nome: 'Placa de vídeo E2E', descricao: 'GPU de teste, 8 GB.', tipo: 'gpu', preco: 1999.90, estoque: 15, ativo: true });
     await desktop.getByRole('button', { name: 'Gerenciar produtos ↗', exact: true }).click();
     await desktop.getByRole('button', { name: 'Ver estoque baixo', exact: true }).click();
@@ -111,6 +123,11 @@ async function run() {
     await mouseRow.waitFor({ state: 'detached' });
     await desktop.getByRole('button', { name: '← Visão geral e pedidos', exact: true }).click();
     await desktop.screenshot({ path: 'test-results/admin-painel.png', fullPage: true });
+    const syncClient=await browser.newPage({viewport:{width:1440,height:1000}});
+    syncClient.on('pageerror',e=>errors.push(e.message));
+    await loginUi(syncClient,email,password);
+    await syncClient.locator('dialog[open]').getByRole('button',{name:'Fechar',exact:true}).click();
+    await syncClient.getByRole('button',{name:'Carrinho (0)',exact:true}).waitFor();
     await loginUi(phone, email, password, true);
     await phone.getByRole('button', { name: 'Meus endereços', exact: true }).click();
     await phone.getByRole('button', { name: '+ Novo endereço', exact: true }).click();
@@ -127,6 +144,12 @@ async function run() {
     await phone.locator('dialog[open]').getByRole('button', { name: 'Fechar', exact: true }).click();
     const ssd = phone.locator('.bbs-product').filter({ has: phone.getByRole('heading', { name: p1.nome, exact: true }) });
     const gpu = phone.locator('.bbs-product').filter({ has: phone.getByRole('heading', { name: p2.nome, exact: true }) });
+    await phone.getByLabel('Marca',{exact:true}).selectOption('BBS Teste');
+    assert.equal(await phone.locator('.bbs-product').count(),1);
+    await phone.getByLabel('Marca',{exact:true}).selectOption('');
+    await phone.getByLabel('Preço máximo',{exact:true}).fill('500');
+    assert.equal(await phone.locator('.bbs-product').count(),1);
+    await phone.getByLabel('Preço máximo',{exact:true}).fill('');
     await ssd.getByRole('button', { name: 'Adicionar aos favoritos: ' + p1.nome, exact: true }).click();
     await ssd.getByRole('button', { name: 'Remover dos favoritos: ' + p1.nome, exact: true }).waitFor();
     await phone.reload();
@@ -144,7 +167,15 @@ async function run() {
     await phone.getByRole('button', { name: 'Limpar', exact: true }).click();
     await ssd.getByRole('button', { name: 'Adicionar ao carrinho', exact: true }).click();
     await phone.locator('#cart-sidebar.open').waitFor();
+    await syncClient.getByRole('button',{name:'Carrinho (1)',exact:true}).waitFor();
+    await api(syncClient.request,'/carrinho','PATCH',{produtoId:p1.id,delta:1});
+    await phone.getByRole('button',{name:'Abrir carrinho com 2 itens',exact:true}).waitFor();
+    await api(syncClient.request,'/carrinho','PATCH',{produtoId:p1.id,delta:-1});
+    await phone.getByRole('button',{name:'Abrir carrinho com 1 itens',exact:true}).waitFor();
     await phone.getByRole('button', { name: 'Finalizar Pedido', exact: true }).click();
+    await phone.getByLabel('Cupom de desconto',{exact:true}).fill('BBS-E2E');
+    await phone.getByRole('button',{name:'Aplicar cupom',exact:true}).click();
+    await phone.getByText('BBS-E2E aplicado',{exact:false}).waitFor();
     await phone.getByRole('button', { name: 'Continuar para entrega →', exact: true }).click();
     await phone.getByLabel('Endereço salvo', { exact:true }).selectOption(String(enderecoSalvo.id));
     assert.equal(await phone.getByLabel('Rua / Logradouro', {exact:true}).inputValue(), 'Rua de teste');
@@ -156,10 +187,19 @@ async function run() {
     await phone.getByRole('button', { name: 'Confirmar pedido demonstrativo', exact: true }).click();
     await phone.getByRole('heading', { name: 'Pedido registrado!', exact: true }).waitFor();
     const pedido = (await api(phone.request, '/pedidos'))[0];
-    assert.equal(pedido.total, 374.81); // 399,90 - 39,99 + 14,90
+    assert.equal(pedido.total, 334.82); // 399,90 - cupom 20% (79,98) + 14,90
+    assert.equal(pedido.cupom,'BBS-E2E');
+    assert.match(pedido.acompanhamento,/^[0-9a-f-]{36}$/);
+    await syncClient.getByRole('button',{name:'Carrinho (0)',exact:true}).waitFor();
     assert.equal(pedido.historico.length, 1);
     assert.equal(await phone.evaluate(() => localStorage.getItem('bbs_cart_draft')), '{}');
     await phone.getByRole('button', { name: 'Voltar à loja', exact: true }).click();
+    await ssd.getByRole('button',{name:'Ver detalhes',exact:true}).click();
+    await phone.getByLabel('Comentário',{exact:true}).fill('Avaliação de compra demonstrativa pelo mobile.');
+    await phone.getByRole('button',{name:'Salvar avaliação',exact:true}).click();
+    await phone.getByText('Avaliação de compra demonstrativa pelo mobile.',{exact:true}).waitFor();
+    await phone.locator('dialog[open]').getByRole('button',{name:'Fechar',exact:true}).click();
+    assert.equal((await api(syncClient.request,'/avaliacoes/'+p1.id)).length,1);
     const segundoPayload = { itens: [{ produtoId: p1.id, quantidade: 1 }], chave: 'segundo-' + Date.now(), entrega: 'normal', pagamento: 'pix', endereco: { cep: '06400000', rua: 'Rua de teste', numero: '10', bairro: 'Centro', cidade: 'Barueri', uf: 'SP' } };
     const segundo = await api(phone.request, '/pedidos', 'POST', segundoPayload);
     assert.equal((await api(phone.request, '/pedidos', 'POST', segundoPayload)).id, segundo.id);
@@ -200,8 +240,10 @@ async function run() {
     await phone.getByRole('heading',{name:'Este navegador',exact:true}).waitFor();
     await noOverflow(phone,'dialog[open]');
     await phone.screenshot({path:'test-results/mobile-seguranca.png',fullPage:true});
+    await api(phone.request,'/carrinho','PATCH',{produtoId:p2.id,delta:1});
+    await syncClient.getByRole('button',{name:'Carrinho (1)',exact:true}).waitFor();
     const authState=await phone.context().storageState();
-    fs.writeFileSync('test-results/persistencia.json', JSON.stringify({ authState, email, enderecoId: enderecoSalvo.id, produtoId: p1.id, pedidoId: pedido.id, canceladoId: segundo.id }));
+    fs.writeFileSync('test-results/persistencia.json', JSON.stringify({ authState, email, carrinhoProdutoId:p2.id, enderecoId: enderecoSalvo.id, produtoId: p1.id, pedidoId: pedido.id, canceladoId: segundo.id }));
     assert.deepEqual(errors, []);
     console.log('PASS: cliente cadastrado pelo admin, sessão mantida, produto com imagem, edição, status, exclusão, estoque baixo, favoritos entre dispositivos, comparação, compra mobile, cotação, desconto, idempotência, cancelamento, estoque e histórico SQL Server.');
   } catch (error) {

@@ -4,6 +4,7 @@ import { request, session, logout } from "../services/api";
 import "./admin.css";
 import Addresses from "./Addresses";
 import Sessions from "./Sessions";
+import Coupons from "./Coupons";
 import OrderHistory from "./OrderHistory";
 import "./features.css";
 const money = value => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -82,6 +83,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
     {error && <p className="bbs-error" role="alert">{error}</p>}
     {!usuario ? <form className="bbs-form" onSubmit={entrar}>
       {cadastro && <label>Nome<input name="nome" required minLength={2} maxLength={100} autoComplete="name" /></label>}
+      {cadastro && <label>CPF (opcional)<input name="cpf" inputMode="numeric" maxLength={14} placeholder="000.000.000-00"/></label>}
       <label>E-mail<input name="email" type="email" required maxLength={150} autoComplete="username" /></label>
       <label>Senha<input name="senha" type="password" required minLength={cadastro ? 8 : 1} maxLength={64} autoComplete={cadastro ? "new-password" : "current-password"} /></label>
       <button className="bbs-primary" disabled={busy}>{busy ? "Aguarde…" : cadastro ? "Cadastrar e entrar" : "Entrar"}</button>
@@ -94,6 +96,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
         <div className="adm-user"><b>{usuario.nome}</b><small>{usuario.email}</small></div>
         <button aria-pressed={tab==="pedidos"} onClick={() => setTab("pedidos")}>{admin ? "Visão geral e pedidos" : "Meus pedidos"}</button>
         {admin && <><button aria-pressed={tab==="clientes"} onClick={() => setTab("clientes")}>Clientes e usuários</button><button onClick={abrirProdutos}>Gerenciar produtos ↗</button></>}
+        {admin && <button aria-pressed={tab==="cupons"} onClick={()=>setTab("cupons")}>Cupons de desconto</button>}
         <button aria-pressed={tab==="enderecos"} onClick={() => setTab("enderecos")}>Meus endereços</button>
         <button aria-pressed={tab==="perfil"} onClick={() => setTab("perfil")}>Editar perfil</button>
         <button aria-pressed={tab==="sessoes"} onClick={() => setTab("sessoes")}>Acessos e segurança</button>
@@ -101,9 +104,10 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
         <button disabled={busy} onClick={sair}>Sair</button>
       </div>
       <div className={admin ? "adm-content" : "account-content"}>
-      <div className="adm-page-heading"><div><small>{admin ? "ADMINISTRAÇÃO / " : "MINHA CONTA / "}{tab.toUpperCase()}</small><h2>{tab==="sessoes"?"Acessos e segurança":tab==="enderecos"?"Meus endereços":tab==="perfil"?"Seu perfil":tab==="clientes"?"Clientes e usuários":admin?"Visão geral":"Meus pedidos"}</h2></div><button disabled={busy || loading} onClick={() => {setLoading(true);setRevision(v => v+1);}}>↻ Atualizar</button></div>
-      {tab === "sessoes" ? <Sessions key={revision} onLogout={() => {onUsuario(null);fechar();}}/> : tab === "enderecos" ? <Addresses/> : tab === "perfil" ? <form className="bbs-form" onSubmit={perfil}>
+      <div className="adm-page-heading"><div><small>{admin ? "ADMINISTRAÇÃO / " : "MINHA CONTA / "}{tab.toUpperCase()}</small><h2>{tab==="cupons"?"Cupons de desconto":tab==="sessoes"?"Acessos e segurança":tab==="enderecos"?"Meus endereços":tab==="perfil"?"Seu perfil":tab==="clientes"?"Clientes e usuários":admin?"Visão geral":"Meus pedidos"}</h2></div><button disabled={busy || loading} onClick={() => {setLoading(true);setRevision(v => v+1);}}>↻ Atualizar</button></div>
+      {tab === "cupons" && admin ? <Coupons/> : tab === "sessoes" ? <Sessions key={revision} onLogout={() => {onUsuario(null);fechar();}}/> : tab === "enderecos" ? <Addresses/> : tab === "perfil" ? <form className="bbs-form" onSubmit={perfil}>
         <label>Nome<input name="nome" defaultValue={usuario.nome} required minLength={2} maxLength={100}/></label>
+        <label>CPF (opcional — preencher para atualizar)<input name="cpf" inputMode="numeric" maxLength={14}/></label>
         <p>Preencha as duas senhas apenas se quiser alterar sua senha.</p>
         <label>Senha atual<input type="password" name="senhaAtual" autoComplete="current-password" maxLength={64}/></label>
         <label>Nova senha<input type="password" name="novaSenha" autoComplete="new-password" minLength={8} maxLength={64}/></label>
@@ -116,6 +120,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
         {pedidosVisiveis.map(p => <article className="bbs-order" key={p.id}>
           <div className="bbs-actions"><h3>Pedido #{p.id}</h3><span className={`bbs-tag adm-status-${p.status.toLowerCase()}`}>{p.status}</span></div>
           <p>{new Date(p.criadoEm).toLocaleString("pt-BR")} · {admin ? p.clienteNome + " · " + p.clienteEmail : "Compra demonstrativa"}</p>
+          {p.acompanhamento && <p className="order-code">Código de acompanhamento BBS: <strong>{p.acompanhamento}</strong><br/><small>Acompanhamento interno demonstrativo.</small></p>}
           <p>{p.endereco}</p>
           <ul>{p.itens.map(i => <li key={i.produtoId}>{i.quantidade}× {i.nome} — {money(i.preco * i.quantidade)}</li>)}</ul>
           <p>Frete: {money(p.frete)} · Desconto: {money(p.desconto)} · <strong>Total: {money(p.total)}</strong></p>
@@ -133,6 +138,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
       <form className="bbs-form" onSubmit={cadastrarCliente}>
         <label>Nome<input name="nome" minLength={2} maxLength={100} required autoComplete="off" disabled={clienteSalvando}/></label>
         <label>E-mail<input name="email" type="email" maxLength={150} required autoComplete="off" disabled={clienteSalvando}/></label>
+        <label>CPF (opcional)<input name="cpf" inputMode="numeric" maxLength={14}/></label>
         <label>Senha inicial<input name="senha" type="password" minLength={8} maxLength={64} required autoComplete="new-password" disabled={clienteSalvando}/></label>
         <p>O cliente pode alterar a senha em Minha conta. Use dados fictícios na demonstração.</p>
         <button className="adm-primary" disabled={clienteSalvando}>{clienteSalvando?"Cadastrando…":"Cadastrar cliente"}</button>

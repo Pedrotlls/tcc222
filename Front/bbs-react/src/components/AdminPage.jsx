@@ -28,6 +28,7 @@ const CATEGORIAS = [
 
 const FORM_VAZIO = {
   nome: "",
+  marca: "",
   descricao: "",
   preco: "",
   estoque: "",
@@ -136,6 +137,7 @@ export default function AdminPage({ fechar, onProdutoSalvo }) {
 
   function abrirEdicao(produto) {
     setForm({
+      marca: produto.marca ?? "",
       nome:      produto.nome      ?? "",
       descricao: produto.descricao ?? "",
       preco:     produto.preco     ?? "",
@@ -210,6 +212,7 @@ export default function AdminPage({ fechar, onProdutoSalvo }) {
           await atualizarProdutoComImagem(editandoId, form, imagemArquivo);
         } else {
           await atualizarProduto(editandoId, {
+            marca: form.marca.trim(),
             nome:      form.nome.trim(),
             descricao: form.descricao.trim(),
             preco:     parseFloat(Number(form.preco).toFixed(2)),
@@ -226,6 +229,7 @@ export default function AdminPage({ fechar, onProdutoSalvo }) {
           await criarProdutoComImagem(form, imagemArquivo);
         } else {
           await criarProduto({
+            marca: form.marca.trim(),
             nome:      form.nome.trim(),
             descricao: form.descricao.trim(),
             preco:     parseFloat(Number(form.preco).toFixed(2)),
@@ -316,6 +320,7 @@ export default function AdminPage({ fechar, onProdutoSalvo }) {
       <form onSubmit={e=>{e.preventDefault();salvar();}}>
         <fieldset disabled={saving} className="adm-editor-fields">
           <label className="adm-full">Nome do produto<input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} required maxLength={150} placeholder="Ex.: Placa de vídeo RTX 4060"/></label>
+          <label className="adm-full">Marca<input value={form.marca} maxLength={80} onChange={e=>setForm(f=>({...f,marca:e.target.value}))} placeholder="Ex.: Intel, AMD, Logitech"/></label>
           <label className="adm-full">Descrição<textarea rows={3} maxLength={4000} value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))} placeholder="Características e especificações"/></label>
           <label>Preço (R$)<input type="number" min="0.01" step="0.01" required value={form.preco} onChange={e=>setForm(f=>({...f,preco:e.target.value}))}/></label>
           <label>Estoque<input type="number" min="0" max="1000000" step="1" required value={form.estoque} onChange={e=>setForm(f=>({...f,estoque:e.target.value}))}/></label>
@@ -352,6 +357,7 @@ async function criarProdutoComImagem(form, arquivo) {
   fd.append("preco",     parseFloat(Number(form.preco).toFixed(2)));
   fd.append("estoque",   form.estoque !== "" ? parseInt(form.estoque) : 0);
   fd.append("tipo",      form.tipo);
+  fd.append("marca", form.marca.trim());
   fd.append("ativo",     form.ativo);
 
   return request("/produtos/com-imagem", {
@@ -370,6 +376,7 @@ async function atualizarProdutoComImagem(id, form, arquivo) {
   fd.append("preco",     parseFloat(Number(form.preco).toFixed(2)));
   fd.append("estoque",   form.estoque !== "" ? parseInt(form.estoque) : 0);
   fd.append("tipo",      form.tipo);
+  fd.append("marca", form.marca.trim());
   fd.append("ativo",     form.ativo);
 
   return request(`/produtos/${id}/com-imagem`, {

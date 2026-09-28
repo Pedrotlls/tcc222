@@ -84,6 +84,9 @@ public class Produto {
     private String imgUrl;
     // "categoria"/tipo textual (ex: gpu, cpu, ram...) para agrupar no front
     private String tipo;
+    @jakarta.persistence.Column(length=80) private String marca;
+    public String getMarca(){return marca;}
+    public void setMarca(String marca){this.marca=marca;}
 
     /*
      * Status de visibilidade na loja.

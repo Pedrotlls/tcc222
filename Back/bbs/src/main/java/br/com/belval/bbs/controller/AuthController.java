@@ -20,7 +20,7 @@ public class AuthController {
     public AuthController(UsuarioRepository usuarios, PasswordEncoder encoder, TokenService tokens, TokenCookies cookies) {
         this.usuarios = usuarios; this.encoder = encoder;this.tokens=tokens;this.cookies=cookies;
     }
-    public record Credenciais(String nome, String email, String senha) {}
+    public record Credenciais(String nome, String email, String senha, String cpf) {}
     @GetMapping("/session")
     public Map<String,Object> session(Authentication auth, CsrfToken csrf, HttpServletRequest req, HttpServletResponse res) {
         Map<String,Object> result = new HashMap<>();
@@ -40,6 +40,7 @@ public class AuthController {
         if (usuarios.findByEmail(email).isPresent()) throw erro("E-mail indisponivel para cadastro.");
         Usuario u = new Usuario(); u.nome = dados.nome().trim(); u.email = email;
         u.senhaHash = encoder.encode(dados.senha());
+        u.cpf=br.com.belval.bbs.service.Cpf.validar(dados.cpf());
         return usuarios.save(u); // Perfil CLIENTE definido no servidor.
     }
     @PostMapping("/login")
@@ -79,7 +80,7 @@ public class AuthController {
     private Usuario conta(Authentication auth){
         return usuarios.findByEmail(auth.getName()).orElseThrow(()->new ResponseStatusException(HttpStatus.UNAUTHORIZED));
     }
-    public record Perfil(String nome, String senhaAtual, String novaSenha) {}
+    public record Perfil(String nome, String senhaAtual, String novaSenha, String cpf) {}
     @PutMapping("/perfil")
     public Usuario perfil(@RequestBody Perfil dados, Authentication auth, HttpServletRequest req, HttpServletResponse res) {
         Usuario u = usuarios.findByEmail(auth.getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
@@ -94,6 +95,7 @@ public class AuthController {
             u.senhaHash=encoder.encode(dados.novaSenha());
 
         }
+        if(dados.cpf()!=null && !dados.cpf().isBlank())u.cpf=br.com.belval.bbs.service.Cpf.validar(dados.cpf());
         u.nome=dados.nome().trim();
         usuarios.save(u);
         if(dados.novaSenha()!=null && !dados.novaSenha().isEmpty()){

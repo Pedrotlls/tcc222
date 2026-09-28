@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { listarProdutosAtivos } from "../services/produtosService";
 import { useCart } from "../context/CartContext";
 import Modal from "./Modal";
+import Reviews from "./Reviews";
 import HardwareArt from "./HardwareArt";
 import { categories, catalogView } from "./catalogView";
 import useFavorites from "./useFavorites";
@@ -22,6 +23,8 @@ export default function ProductList({ versao, usuario, abrirConta, favoritesOnly
   const [retry,setRetry] = useState(0);
   const [busca,setBusca] = useState("");
   const [categoria,setCategoria] = useState("");
+  const [marca,setMarca]=useState("");
+  const [maxPreco,setMaxPreco]=useState("");
   const [ordem,setOrdem] = useState("nome");
   const [selected,setSelected] = useState(null);
   const favorites=useFavorites(usuario,abrirConta);
@@ -37,7 +40,7 @@ export default function ProductList({ versao, usuario, abrirConta, favoritesOnly
   const source=favoritesOnly?favorites.items:produtos;
   const comparisonSource=[...new Map([...favorites.items,...produtos].map(p=>[p.id,p])).values()];
   const comparison=compareIds.map(id=>comparisonSource.find(p=>p.id===id)).filter(Boolean);
-  const {filtered,groups}=catalogView(source,busca,categoria,ordem);
+  const {filtered,groups}=catalogView(source.filter(p=>(!marca || p.marca===marca) && (!maxPreco || Number(p.preco)<=Number(maxPreco))),busca,categoria,ordem);
   const available=[...new Set(source.map(p=>p.tipo || "outros"))];
   function comprar(p) { addToCart(p.id,p.nome,Number(p.preco),p.imgUrl || "",p.estoque);setSelected(null); }
   function indisponivel(p) { return !p.ativo || p.estoque <= (cart[p.id]?.qty || 0); }
@@ -52,12 +55,15 @@ export default function ProductList({ versao, usuario, abrirConta, favoritesOnly
       {Object.entries(categories).filter(([id])=>available.includes(id)).map(([id,c])=><button key={id} className={categoria===id?"active":""} aria-pressed={categoria===id} onClick={()=>setCategoria(categoria===id?"":id)}><HardwareArt tipo={id}/>{c.name}</button>)}
     </div>
     <div className="bbs-filters">
-      <label>Buscar produto<input type="search" placeholder="Nome ou descrição" value={busca} onChange={e => setBusca(e.target.value)}/></label>
+      <label>Buscar produto<input type="search" placeholder="Nome, marca ou descrição" list="bbs-sugestoes" autoComplete="off" value={busca} onChange={e => setBusca(e.target.value)}/></label>
+      <datalist id="bbs-sugestoes">{source.filter(p=>busca.length>1 && p.nome.toLowerCase().includes(busca.toLowerCase())).slice(0,6).map(p=><option key={p.id} value={p.nome}/>)}</datalist>
+      <label>Marca<select value={marca} onChange={e=>setMarca(e.target.value)}><option value="">Todas as marcas</option>{[...new Set(source.map(p=>p.marca).filter(Boolean))].sort().map(m=><option key={m}>{m}</option>)}</select></label>
+      <label>Preço máximo<input type="number" min="0" step="0.01" value={maxPreco} onChange={e=>setMaxPreco(e.target.value)} placeholder="Sem limite"/></label>
       <label>Categoria<select value={categoria} onChange={e => setCategoria(e.target.value)}><option value="">Todas</option>{available.map(c => <option key={c} value={c}>{cats[c]||(c==="outros"?"Outros":c)}</option>)}</select></label>
       <label>Ordenar<select value={ordem} onChange={e => setOrdem(e.target.value)}><option value="nome">Nome A–Z</option><option value="preco">Menor preço</option><option value="maior">Maior preço</option></select></label>
     </div>
     {loading ? <p className="bbs-info" role="status">Carregando catálogo…</p> : error ? <div className="bbs-info"><p className="bbs-error" role="alert">{error}</p><button onClick={() => {setLoading(true);setRetry(v => v+1);}}>Tentar novamente</button></div> : <>
-      <div className="sf-results"><p className="bbs-result-count" role="status">{filtered.length} produto(s) encontrado(s)</p>{(busca || categoria || ordem!=="nome") && <button onClick={()=>{setBusca("");setCategoria("");setOrdem("nome");}}>Limpar filtros ×</button>}</div>
+      <div className="sf-results"><p className="bbs-result-count" role="status">{filtered.length} produto(s) encontrado(s)</p>{(busca || categoria || marca || maxPreco || ordem!=="nome") && <button onClick={()=>{setBusca("");setCategoria("");setMarca("");setMaxPreco("");setOrdem("nome");}}>Limpar filtros ×</button>}</div>
       {!filtered.length && <div className="sf-empty"><h3>{favoritesOnly?"Nenhum favorito encontrado.":"Nenhum produto por aqui."}</h3><p>{favoritesOnly?"Use o coração nos produtos para salvar na sua conta, ou limpe os filtros.":"Tente outro nome ou escolha uma categoria diferente."}</p></div>}
       {groups.map(group=><section className="sf-category-section" key={group.id} style={{"--category-accent":group.accent}} aria-labelledby={`category-${group.id}`}>
       <div className="sf-section-heading"><span className="sf-heading-line"/><div><h2 id={`category-${group.id}`}>{group.name}</h2><p>{group.tag}</p></div><span className="sf-heading-line"/></div>
@@ -65,14 +71,14 @@ export default function ProductList({ versao, usuario, abrirConta, favoritesOnly
         <div className="feature-card-top"><span className={`sf-stock ${!p.ativo || p.estoque<=0?"unavailable":""}`}>{!p.ativo || p.estoque<=0?"Indisponível":p.estoque<=5?"Últimas unidades":"Disponível"}</span><button className="feature-heart" disabled={favorites.pending!==null || favorites.loading || Boolean(favorites.error)} aria-pressed={favorites.items.some(f=>f.id===p.id)} aria-label={`${favorites.items.some(f=>f.id===p.id)?"Remover dos":"Adicionar aos"} favoritos: ${p.nome}`} onClick={()=>favorites.toggle(p)}>{favorites.items.some(f=>f.id===p.id)?"♥":"♡"}</button></div>
         <button className="bbs-product-image" onClick={() => setSelected(p)} aria-label={"Ver detalhes de "+p.nome}><ProductImage key={p.imgUrl} p={p}/></button>
         <span className="bbs-product-category">{cats[p.tipo]||p.tipo||"Hardware"}</span>
-        <h3 title={p.nome}>{p.nome}</h3><p>{(p.descricao||"").slice(0,100)}</p><strong>{money(p.preco)}</strong>
+        {p.marca && <small>{p.marca}</small>}<h3 title={p.nome}>{p.nome}</h3><p>{(p.descricao||"").slice(0,100)}</p><strong>{money(p.preco)}</strong>
         <span>{p.estoque>0 ? p.estoque+" em estoque" : "Indisponível"}</span>
         <button className="bbs-buy" disabled={indisponivel(p)} onClick={() => comprar(p)}>{indisponivel(p) ? "Limite de estoque" : "Adicionar ao carrinho"}</button>
         <button className="bbs-details" onClick={() => setSelected(p)}>Ver detalhes</button>
         <label className="feature-compare-check"><input type="checkbox" checked={compareIds.includes(p.id)} disabled={!compareIds.includes(p.id) && compareIds.length>=3} onChange={()=>setCompareIds(ids=>toggleComparison(ids,p.id))}/>Comparar produto</label>
       </article>)}</div></section>)}
     </>}
-    {selected && <Modal title={selected.nome} fechar={() => setSelected(null)}><div className="bbs-detail-image"><ProductImage p={selected}/></div><p>{selected.descricao||"Sem descrição adicional."}</p><p>Categoria: {cats[selected.tipo]||selected.tipo||"Hardware"} · Estoque: {selected.estoque}</p><h3>{money(selected.preco)}</h3><button className="bbs-primary" disabled={indisponivel(selected)} onClick={() => comprar(selected)}>Adicionar ao carrinho</button></Modal>}
+    {selected && <Modal title={selected.nome} fechar={() => setSelected(null)}><div className="bbs-detail-image"><ProductImage p={selected}/></div><p>{selected.marca && `Marca: ${selected.marca}`}</p><p>{selected.descricao||"Sem descrição adicional."}</p><p>Categoria: {cats[selected.tipo]||selected.tipo||"Hardware"} · Estoque: {selected.estoque}</p><h3>{money(selected.preco)}</h3><button className="bbs-primary" disabled={indisponivel(selected)} onClick={() => comprar(selected)}>Adicionar ao carrinho</button><Reviews key={selected.id} produtoId={selected.id} usuario={usuario} abrirConta={()=>{setSelected(null);abrirConta();}}/></Modal>}
     {comparison.length>0 && <div className="feature-compare-bar"><span>{comparison.length}/3 selecionados</span><button disabled={comparison.length<2} onClick={()=>setComparing(true)}>Comparar</button><button onClick={()=>setCompareIds([])}>Limpar</button></div>}
     {comparing && <Modal className="feature-comparison" title="Comparar produtos" fechar={()=>setComparing(false)}><p>Dados cadastrados no catálogo. Compare até três produtos; a descrição apresenta as especificações informadas.</p><div className="feature-table-scroll"><table><thead><tr><th>Característica</th>{comparison.map(p=><th key={p.id}>{p.nome}</th>)}</tr></thead><tbody>
       <tr><th>Imagem</th>{comparison.map(p=><td key={p.id}><div className="feature-compare-image"><ProductImage p={p}/></div></td>)}</tr>

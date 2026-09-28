@@ -4,7 +4,7 @@
 
 1. Abra o SQL Server Management Studio e conecte ao seu servidor.
 2. Abra **01_criar_banco.sql** e clique em Executar (F5).
-3. Execute **03_atualizar_funcionalidades.sql** depois **04_enderecos_clientes.sql** e **05_tokens_autenticacao.sql**. Confirme as oito tabelas no banco **apibbs**. Em instalação já funcionando, pare a API e execute 03, 04 e 05.
+3. Execute **03_atualizar_funcionalidades.sql** depois **04_enderecos_clientes.sql** e **05_tokens_autenticacao.sql** e **06_escopo_loja.sql**. Confirme as onze tabelas no banco **apibbs**. Em instalação já funcionando, pare a API e execute 03, 04, 05 e 06.
 4. Opcionalmente, execute **02_produtos_exemplo.sql** para adicionar cinco produtos fictícios.
 
 O 01 cria tabelas ausentes. O 03 cria favoritos e histórico e acrescenta colunas opcionais de produto ausentes, preservando registros. Pode ser repetido.
@@ -61,7 +61,7 @@ Não é necessário alterar as tabelas para essa regra.
 - **Connection refused / TCP/IP connection failed:** confirme se o serviço SQL Server está ligado, se TCP/IP está habilitado e qual porta ele usa.
 - **Login failed:** confira DB_USER, DB_PASSWORD, o modo de autenticação configurado e o acesso do login ao banco.
 - **Cannot open database apibbs:** confirme a execução do primeiro script e o acesso do login a esse banco.
-- **Schema-validation / missing table:** execute 01, 03, 04 e 05 no servidor apontado pela URL, no esquema dbo.
+- **Schema-validation / missing table:** execute 01, 03, 04, 05 e 06 no servidor apontado pela URL, no esquema dbo.
 - **Missing column / wrong column type:** execute o 03; se persistir, compare a tabela legada com o script. Não exclua seus dados.
 - **Could not resolve placeholder DB_URL:** inclua as variáveis na configuração de execução e reinicie.
 - **Could not resolve dependencies:** deixe o Maven terminar o download e confira a rede/proxy da escola.
@@ -71,7 +71,7 @@ Não rode os scripts no H2. O H2 é reservado aos testes automatizados, que ativ
 
 ## Verificação e referências
 
-O workflow inclui SQL Server real em contêiner descartável, com os scripts 01, 03, 04 e 05, compra pelo navegador e verificação após reiniciar a API. Confira o resultado em [VALIDACAO.md](../docs/VALIDACAO.md). No laboratório, confirme suas variáveis locais e teste a rede do celular.
+O workflow inclui SQL Server real em contêiner descartável, com os scripts 01, 03, 04, 05 e 06, compra pelo navegador e verificação após reiniciar a API. Confira o resultado em [VALIDACAO.md](../docs/VALIDACAO.md). No laboratório, confirme suas variáveis locais e teste a rede do celular.
 
 Referência da sintaxe: [Microsoft — CREATE TABLE](https://learn.microsoft.com/en-us/sql/t-sql/statements/create-table-transact-sql).
 
