@@ -24,9 +24,10 @@ BEGIN TRY
             codigo VARCHAR(30) NOT NULL PRIMARY KEY,
             percentual INT NOT NULL CHECK(percentual BETWEEN 1 AND 50),
             limite_usos INT NOT NULL CHECK(limite_usos>0),
-            usos INT NOT NULL CHECK(usos>=0 AND usos<=limite_usos),
+            usos INT NOT NULL,
             validade DATETIME2(6) NOT NULL,
-            ativo BIT NOT NULL
+            ativo BIT NOT NULL,
+            CONSTRAINT ck_cupom_usos CHECK(usos>=0 AND usos<=limite_usos)
         );
     IF OBJECT_ID('dbo.bbs_avaliacao','U') IS NULL
         CREATE TABLE dbo.bbs_avaliacao (
