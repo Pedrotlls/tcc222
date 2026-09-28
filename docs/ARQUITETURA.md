@@ -48,8 +48,8 @@ Prefixo visto pelo navegador: /api. Na API Java, não há esse prefixo.
 | --- | --- | --- |
 | GET | /auth/session | Público: token CSRF e usuário atual, se houver |
 | POST | /auth/registro | Público + CSRF: cadastrar cliente |
-| POST | /auth/login | Público + CSRF: iniciar sessão |
-| POST | /auth/logout | Autenticado + CSRF: encerrar sessão |
+| POST | /auth/login | Público + CSRF: emitir tokens HttpOnly |
+| POST | /auth/logout | Público + CSRF: revogar tokens apresentados e limpar cookies |
 | PUT | /auth/perfil | Autenticado + CSRF: editar nome/senha própria |
 | GET | /produtos/ativos | Catálogo público |
 | GET | /produtos | Administrador: todos os produtos |
@@ -120,3 +120,7 @@ sem peso, dimensões, distância exata ou contrato com transportadora.
 ## Endereços do cliente
 
 `bbs_endereco` (modelo EnderecoSalvo) guarda até dez endereços por conta, com apelido, CEP, logradouro, número, complemento, bairro, cidade, UF e principal. O índice filtrado SQL Server garante no máximo um principal por usuário; transações serializam alterações por conta. `GET/POST /enderecos` e `PUT/DELETE /enderecos/{id}` usam o usuário autenticado, nunca um dono enviado pelo navegador. O checkout aceita `enderecoId`, valida a propriedade e copia os dados no pedido. Também aceita endereço avulso. Editar/excluir o cadastro não altera compras anteriores.
+
+## Tokens de autenticação
+
+`TokenFilter` consulta o hash do token de acesso em cada requisição. `TokenService` controla validade, rotação e revogação; `TokenCookies` transporta tokens em cookies HttpOnly. `HttpSession` guarda apenas CSRF, sem identidade autenticada. O banco ganhou `bbs_sessao_token` (relação N:1 com `bbs_usuario`); consultar [TOKENS.md](TOKENS.md) para endpoints, campos e regras.

@@ -4,7 +4,7 @@
 
 1. Pare a API no Spring Tools e o Vite no VS Code. Guarde cópia dos arquivos que editou no PC e backup do banco.
 2. Atualize a branch `codex/bbs-completo` pelo Git, conforme os comandos abaixo. Os caminhos continuam `tcc222/Front/bbs-react` e `tcc222/Back/bbs`. Se usar o ZIP da branch pelo GitHub, extraia e mescle Front, Back, database e docs; deixar o ZIP na pasta não atualiza o programa.
-3. No SSMS do mesmo servidor usado pela API, execute **database/03_atualizar_funcionalidades.sql** e depois **database/04_enderecos_clientes.sql**. Preserva contas, produtos e pedidos. Banco novo: primeiro execute o 01; o 02 é opcional para exemplos.
+3. No SSMS do mesmo servidor usado pela API, execute **database/03_atualizar_funcionalidades.sql** e depois **database/04_enderecos_clientes.sql** e **database/05_tokens_autenticacao.sql**. Preserva contas, produtos e pedidos. Banco novo: primeiro execute o 01; o 02 é opcional para exemplos.
 4. No Spring Tools, selecione o projeto, pressione F5 e rode **BbsApplication → Run As → Spring Boot App**. Mantenha as variáveis de banco e administrador já configuradas.
 5. No VS Code, terminal em **Front/bbs-react**: `npm ci` e depois `npm run dev`. Abra **http://localhost:5173** e atualize com Ctrl+F5.
 
@@ -63,3 +63,7 @@ Projeto acadêmico integrado com SQL Server. Pagamentos não geram cobranças ou
 ## Endereços salvos
 
 Com a API parada, execute `database/04_enderecos_clientes.sql` depois do 03, inclusive em banco novo. A migração pode ser repetida e preserva os registros existentes. Na conta, abra **Meus endereços** para cadastrar, editar, excluir e definir o principal. O checkout carrega o principal e permite selecionar outro ou salvar um novo. Cada cliente acessa apenas seus endereços; pedidos guardam uma cópia da entrega e não mudam quando o cadastro é editado.
+
+## Atualização de autenticação — 28/09/2026
+
+Login com token de acesso (15 minutos) e renovação automática, limitada a oito horas desde o login. A tela **Acessos e segurança** funciona no desktop e no mobile, permite encerrar um acesso ou sair de todos. Trocar a senha encerra os outros acessos. Contas e senhas existentes são preservadas. Execute o script 05 com a API parada; veja [TOKENS.md](TOKENS.md).

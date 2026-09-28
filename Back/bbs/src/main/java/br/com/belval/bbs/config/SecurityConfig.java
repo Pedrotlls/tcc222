@@ -5,20 +5,28 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-/** Sessao HttpOnly e CSRF. O proxy mantem frontend e API na mesma origem. */
+/** Tokens HttpOnly e proteção CSRF, inclusive no login e na renovação. */
 @Configuration
 public class SecurityConfig {
     @Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
-    @Bean SecurityFilterChain security(HttpSecurity http) throws Exception {
-        return http.authorizeHttpRequests(a -> a
-                .requestMatchers("/auth/session", "/auth/login", "/auth/registro", "/error").permitAll()
+    @Bean SecurityFilterChain security(HttpSecurity http, br.com.belval.bbs.security.TokenService tokens, br.com.belval.bbs.security.TokenCookies cookies) throws Exception {
+        return http.securityContext(c -> c.securityContextRepository(new org.springframework.security.web.context.NullSecurityContextRepository()))
+            .requestCache(c -> c.disable())
+            .addFilterBefore(new br.com.belval.bbs.security.TokenFilter(tokens,cookies),org.springframework.security.web.authentication.AnonymousAuthenticationFilter.class)
+            .authorizeHttpRequests(a -> a
+                .requestMatchers("/auth/session", "/auth/login", "/auth/registro", "/auth/refresh", "/auth/logout", "/error").permitAll()
                 .requestMatchers(HttpMethod.GET, "/produtos/ativos", "/imagens/**").permitAll()
                 .requestMatchers("/produtos/**", "/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .formLogin(f -> f.disable()).httpBasic(b -> b.disable()).logout(l -> l.disable())
             .exceptionHandling(e -> e
                 .authenticationEntryPoint((req,res,ex) -> res.sendError(401))
-                .accessDeniedHandler((req,res,ex) -> res.sendError(403)))
+                .accessDeniedHandler((req,res,ex) -> {
+                    res.setStatus(403);res.setContentType("application/json");
+                    res.getWriter().write(ex instanceof org.springframework.security.web.csrf.CsrfException
+                        ? "{\"code\":\"CSRF_INVALID\",\"message\":\"Atualize a sessão e tente novamente.\"}"
+                        : "{\"message\":\"Acesso negado.\"}");
+                }))
             .build();
     }
 }

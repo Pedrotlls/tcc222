@@ -76,7 +76,7 @@ jobs:
         env:
           SQL_CONTAINER: ${{ job.services.sqlserver.id }}
         run: |
-          for script in database/01_criar_banco.sql database/03_atualizar_funcionalidades.sql database/04_enderecos_clientes.sql database/03_atualizar_funcionalidades.sql database/04_enderecos_clientes.sql; do
+          for script in database/01_criar_banco.sql database/03_atualizar_funcionalidades.sql database/04_enderecos_clientes.sql database/03_atualizar_funcionalidades.sql database/04_enderecos_clientes.sql database/05_tokens_autenticacao.sql database/05_tokens_autenticacao.sql; do
             docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < "$script"
           done
       - run: sh mvnw --batch-mode package -DskipTests
@@ -113,6 +113,7 @@ jobs:
           done
           docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/03_atualizar_funcionalidades.sql
           docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/04_enderecos_clientes.sql
+          docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/05_tokens_autenticacao.sql
           java -jar Back/bbs/target/bbs-0.0.1-SNAPSHOT.jar > Front/bbs-react/test-results/api-reinicio.log 2>&1 &
           for attempt in {1..60}; do
             if curl -fsS http://127.0.0.1:5173/api/auth/session > /dev/null; then exit 0; fi
@@ -127,5 +128,7 @@ jobs:
         if: always()
         with:
           name: bbs-desktop-mobile-sqlserver
-          path: Front/bbs-react/test-results/
+          path: |
+            Front/bbs-react/test-results
+            !Front/bbs-react/test-results/persistencia.json
           retention-days: 14

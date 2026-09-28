@@ -3,6 +3,7 @@ import Modal from "./Modal";
 import { request, session, logout } from "../services/api";
 import "./admin.css";
 import Addresses from "./Addresses";
+import Sessions from "./Sessions";
 import OrderHistory from "./OrderHistory";
 import "./features.css";
 const money = value => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -95,12 +96,13 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
         {admin && <><button aria-pressed={tab==="clientes"} onClick={() => setTab("clientes")}>Clientes e usuários</button><button onClick={abrirProdutos}>Gerenciar produtos ↗</button></>}
         <button aria-pressed={tab==="enderecos"} onClick={() => setTab("enderecos")}>Meus endereços</button>
         <button aria-pressed={tab==="perfil"} onClick={() => setTab("perfil")}>Editar perfil</button>
+        <button aria-pressed={tab==="sessoes"} onClick={() => setTab("sessoes")}>Acessos e segurança</button>
         {admin && <button onClick={fechar}>← Voltar à loja</button>}
         <button disabled={busy} onClick={sair}>Sair</button>
       </div>
       <div className={admin ? "adm-content" : "account-content"}>
-      <div className="adm-page-heading"><div><small>{admin ? "ADMINISTRAÇÃO / " : "MINHA CONTA / "}{tab.toUpperCase()}</small><h2>{tab==="enderecos"?"Meus endereços":tab==="perfil"?"Seu perfil":tab==="clientes"?"Clientes e usuários":admin?"Visão geral":"Meus pedidos"}</h2></div><button disabled={busy || loading} onClick={() => {setLoading(true);setRevision(v => v+1);}}>↻ Atualizar</button></div>
-      {tab === "enderecos" ? <Addresses/> : tab === "perfil" ? <form className="bbs-form" onSubmit={perfil}>
+      <div className="adm-page-heading"><div><small>{admin ? "ADMINISTRAÇÃO / " : "MINHA CONTA / "}{tab.toUpperCase()}</small><h2>{tab==="sessoes"?"Acessos e segurança":tab==="enderecos"?"Meus endereços":tab==="perfil"?"Seu perfil":tab==="clientes"?"Clientes e usuários":admin?"Visão geral":"Meus pedidos"}</h2></div><button disabled={busy || loading} onClick={() => {setLoading(true);setRevision(v => v+1);}}>↻ Atualizar</button></div>
+      {tab === "sessoes" ? <Sessions key={revision} onLogout={() => {onUsuario(null);fechar();}}/> : tab === "enderecos" ? <Addresses/> : tab === "perfil" ? <form className="bbs-form" onSubmit={perfil}>
         <label>Nome<input name="nome" defaultValue={usuario.nome} required minLength={2} maxLength={100}/></label>
         <p>Preencha as duas senhas apenas se quiser alterar sua senha.</p>
         <label>Senha atual<input type="password" name="senhaAtual" autoComplete="current-password" maxLength={64}/></label>

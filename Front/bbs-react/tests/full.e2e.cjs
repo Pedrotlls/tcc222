@@ -33,7 +33,11 @@ async function noOverflow(page, target = 'html') {
 }
 async function verifyPersistence() {
   const saved = JSON.parse(fs.readFileSync('test-results/persistencia.json', 'utf8'));
-  const ctx = await request.newContext();
+  const ctx = await request.newContext({storageState: saved.authState});
+  const restored=await api(ctx, '/auth/session');
+  assert.equal(restored.usuario.email,saved.email);
+  await api(ctx, '/auth/refresh', 'POST');
+  assert.equal((await api(ctx, '/auth/session')).usuario.email,saved.email);
   try {
     await loginApi(ctx, saved.email, password);
     const enderecos = await api(ctx, '/enderecos');
@@ -184,7 +188,20 @@ async function run() {
     assert.equal(await another.locator('.bbs-product').count(), 1);
     await noOverflow(another);
     await another.screenshot({ path: 'test-results/desktop-loja.png', fullPage: true });
-    fs.writeFileSync('test-results/persistencia.json', JSON.stringify({ email, enderecoId: enderecoSalvo.id, produtoId: p1.id, pedidoId: pedido.id, canceladoId: segundo.id }));
+    // Expira apenas o cookie de acesso: o mobile deve renovar e manter a conta.
+    const refreshBefore=(await phone.context().cookies()).find(c=>c.name==='bbs_refresh').value;
+    await phone.context().clearCookies({name:'bbs_access'});
+    await phone.reload();
+    await phone.getByRole('button', { name: 'Abrir minha conta', exact: true }).click();
+    await phone.getByRole('button', { name: 'Editar perfil', exact: true }).waitFor();
+    const refreshAfter=(await phone.context().cookies()).find(c=>c.name==='bbs_refresh').value;
+    assert.notEqual(refreshAfter,refreshBefore);
+    await phone.getByRole('button', {name:'Acessos e segurança',exact:true}).click();
+    await phone.getByRole('heading',{name:'Este navegador',exact:true}).waitFor();
+    await noOverflow(phone,'dialog[open]');
+    await phone.screenshot({path:'test-results/mobile-seguranca.png',fullPage:true});
+    const authState=await phone.context().storageState();
+    fs.writeFileSync('test-results/persistencia.json', JSON.stringify({ authState, email, enderecoId: enderecoSalvo.id, produtoId: p1.id, pedidoId: pedido.id, canceladoId: segundo.id }));
     assert.deepEqual(errors, []);
     console.log('PASS: cliente cadastrado pelo admin, sessão mantida, produto com imagem, edição, status, exclusão, estoque baixo, favoritos entre dispositivos, comparação, compra mobile, cotação, desconto, idempotência, cancelamento, estoque e histórico SQL Server.');
   } catch (error) {

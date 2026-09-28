@@ -54,3 +54,7 @@ A validação automatizada não substitui a instalação no computador de aprese
 5. Abrir `/mobile` em um aparelho físico na mesma rede e confirmar se a escola permite a comunicação entre dispositivos.
 
 Pagamentos e frete continuam acadêmicos. A interface mobile é web, não APK. Testes de carga e uso comercial não foram homologados. A documentação Word foi atualizada em 20/09/2026 com os endereços implementados, o DER das sete tabelas, os manuais e estas evidências. Os campos pessoais não informados continuam identificados para preenchimento pelos integrantes.
+
+## Atualização de tokens — 28/09/2026
+
+Implementados testes de validade, rotação, reuso, revogação, troca de senha, CSRF e isolamento de acessos. O teste SQL Server/mobile também verifica renovação no navegador e autenticação preservada após reinício. Os resultados da versão anterior acima não certificam esta alteração. Frontend local: 19 testes, lint e build aprovados. Backend local bloqueado por resolução DNS do Maven Central; validação completa desta versão será registrada após o CI.

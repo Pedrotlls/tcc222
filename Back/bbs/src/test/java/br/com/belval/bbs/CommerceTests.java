@@ -28,7 +28,7 @@ class CommerceTests {
     @Autowired CompraRepository compras;
     Integer produtoId;
     @BeforeEach void dados() {
-        jdbc.update("DELETE FROM bbs_endereco");compras.deleteAll();usuarios.deleteAll();produtos.deleteAll();
+        jdbc.update("DELETE FROM bbs_sessao_token");jdbc.update("DELETE FROM bbs_endereco");compras.deleteAll();usuarios.deleteAll();produtos.deleteAll();
         Usuario u=new Usuario();u.nome="Cliente teste";u.email="cliente@teste.local";u.senhaHash="hash-nao-utilizado";
         usuarios.save(u);
         Produto p=new Produto();p.setNome("SSD teste");p.setPreco(new BigDecimal("100.00"));p.setEstoque(2);p.setTipo("ssd");
@@ -51,12 +51,14 @@ class CommerceTests {
         mvc.perform(post("/admin/clientes").with(csrf()).contentType("application/json").content(body)).andExpect(status().isUnauthorized());
         mvc.perform(post("/admin/clientes").with(user("cliente@teste.local").roles("CLIENTE")).with(csrf()).contentType("application/json").content(body)).andExpect(status().isForbidden());
         mvc.perform(post("/admin/clientes").with(user("admin@teste.local").roles("ADMIN")).contentType("application/json").content(body)).andExpect(status().isForbidden());
-        Usuario admin=new Usuario();admin.nome="Admin";admin.email="admin@teste.local";admin.perfil="ADMIN";admin.senhaHash="teste";usuarios.save(admin);
-        MockHttpSession session=new MockHttpSession();
-        mvc.perform(post("/admin/clientes").session(session).with(user(admin.email).roles("ADMIN")).with(csrf()).contentType("application/json").content(body))
+        Usuario admin=new Usuario();admin.nome="Admin";admin.email="admin@teste.local";admin.perfil="ADMIN";admin.senhaHash=new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("AdminTeste12345");usuarios.save(admin);
+        var login=mvc.perform(post("/auth/login").with(csrf()).contentType("application/json")
+            .content("{\"email\":\"admin@teste.local\",\"senha\":\"AdminTeste12345\"}")).andExpect(status().isOk()).andReturn();
+        var cookies=login.getResponse().getCookies();
+        mvc.perform(post("/admin/clientes").cookie(cookies).with(csrf()).contentType("application/json").content(body))
             .andExpect(status().isCreated()).andExpect(jsonPath("$.perfil").value("CLIENTE"))
             .andExpect(jsonPath("$.email").value("novoadmin@teste.local")).andExpect(jsonPath("$.senhaHash").doesNotExist());
-        mvc.perform(get("/auth/session").session(session)).andExpect(status().isOk()).andExpect(jsonPath("$.usuario.email").value(admin.email));
+        mvc.perform(get("/auth/session").cookie(cookies)).andExpect(status().isOk()).andExpect(jsonPath("$.usuario.email").value(admin.email));
         Usuario cliente=usuarios.findByEmail("novoadmin@teste.local").orElseThrow();
         assertThat(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().matches("InicialSegura123",cliente.senhaHash)).isTrue();
         mvc.perform(post("/admin/clientes").with(user(admin.email).roles("ADMIN")).with(csrf()).contentType("application/json").content(body)).andExpect(status().isBadRequest());

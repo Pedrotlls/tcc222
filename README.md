@@ -8,7 +8,7 @@ Pedidos, frete e modalidades de pagamento são demonstrativos: não existe cobra
 
 Siga o [guia SQL Server + Spring Tools + VS Code](database/LEIA-ME.md).
 
-1. No SSMS, execute [01_criar_banco.sql](database/01_criar_banco.sql) e depois [03_atualizar_funcionalidades.sql](database/03_atualizar_funcionalidades.sql) e [04_enderecos_clientes.sql](database/04_enderecos_clientes.sql). Se o banco já funciona, pare a API e execute 03 e 04.
+1. No SSMS, execute [01_criar_banco.sql](database/01_criar_banco.sql) e depois [03_atualizar_funcionalidades.sql](database/03_atualizar_funcionalidades.sql) e [04_enderecos_clientes.sql](database/04_enderecos_clientes.sql). Se o banco já funciona, pare a API e execute 03, 04 e [05_tokens_autenticacao.sql](database/05_tokens_autenticacao.sql).
 2. Opcional: execute [02_produtos_exemplo.sql](database/02_produtos_exemplo.sql).
 3. No Spring Tools, importe Back/bbs como Existing Maven Project.
 4. Configure DB_URL, DB_USER, DB_PASSWORD e as credenciais iniciais BBS_ADMIN_EMAIL/BBS_ADMIN_PASSWORD conforme o guia.
@@ -30,7 +30,7 @@ A pasta Front/SLA e Front/bbs-react/legacy são versões anteriores, não execut
 
 - Catálogo vindo da API, busca, categoria, ordenação e detalhes.
 - Carrinho como rascunho no dispositivo, com limites de quantidade.
-- Cadastro, login/logout, sessão HttpOnly, CSRF, edição de nome e senha.
+- Cadastro, login/logout, tokens de acesso e renovação HttpOnly, CSRF, edição de nome e senha.
 - Endereços salvos por cliente, principal, seleção no checkout e retomada da compra após login.
 - Administração autorizada no backend.
 - CRUD de produtos, imagens JPG/PNG/GIF/WEBP de até 5 MB, ativação/desativação.
@@ -88,3 +88,7 @@ Documentos: [arquitetura e endpoints](docs/ARQUITETURA.md), [apresentação](doc
 ## Endereços salvos
 
 Com a API parada, execute `database/04_enderecos_clientes.sql` depois do 03, inclusive em banco novo. A migração pode ser repetida e preserva os registros existentes. Na conta, abra **Meus endereços** para cadastrar, editar, excluir e definir o principal. O checkout carrega o principal e permite selecionar outro ou salvar um novo. Cada cliente acessa apenas seus endereços; pedidos guardam uma cópia da entrega e não mudam quando o cadastro é editado.
+
+## Autenticação por tokens
+
+Execute também `database/05_tokens_autenticacao.sql` antes de iniciar esta versão. Tokens expiram, são renovados automaticamente e podem ser revogados em **Minha conta → Acessos e segurança**. Guia: [TOKENS.md](docs/TOKENS.md). Configuração local portátil: copie `Back/bbs/application.properties.example` para `Back/bbs/application.properties` e preencha os dados do SQL Server.

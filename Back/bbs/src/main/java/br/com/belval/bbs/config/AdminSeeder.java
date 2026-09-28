@@ -18,10 +18,10 @@ public class AdminSeeder implements ApplicationRunner {
     }
     public void run(ApplicationArguments args) {
         if (password.isBlank()) return;
-        if (password.length() < 12 || password.length() > 64 || password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72)
-            throw new IllegalStateException("BBS_ADMIN_PASSWORD deve ter de 12 a 64 caracteres.");
         String login = email.trim().toLowerCase(Locale.ROOT);
         if (repository.findByEmail(login).isPresent()) return;
+        if (password.length() < 12 || password.length() > 64 || password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72)
+            throw new IllegalStateException("BBS_ADMIN_PASSWORD deve ter de 12 a 64 caracteres.");
         Usuario u = new Usuario(); u.email = login; u.nome = "Administrador BBS";
         u.perfil = "ADMIN"; u.senhaHash = encoder.encode(password); repository.save(u);
     }
