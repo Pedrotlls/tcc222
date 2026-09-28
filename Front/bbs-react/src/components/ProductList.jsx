@@ -57,7 +57,7 @@ export default function ProductList({ versao, usuario, abrirConta, favoritesOnly
     <div className="bbs-filters">
       <label>Buscar produto<input type="search" placeholder="Nome, marca ou descrição" list="bbs-sugestoes" autoComplete="off" value={busca} onChange={e => setBusca(e.target.value)}/></label>
       <datalist id="bbs-sugestoes">{source.filter(p=>busca.length>1 && p.nome.toLowerCase().includes(busca.toLowerCase())).slice(0,6).map(p=><option key={p.id} value={p.nome}/>)}</datalist>
-      <label>Marca<select value={marca} onChange={e=>setMarca(e.target.value)}><option value="">Todas as marcas</option>{[...new Set(source.map(p=>p.marca).filter(Boolean))].sort().map(m=><option key={m}>{m}</option>)}</select></label>
+      <label>Marca<select aria-label="Marca" value={marca} onChange={e=>setMarca(e.target.value)}><option value="">Todas as marcas</option>{[...new Set(source.map(p=>p.marca).filter(Boolean))].sort().map(m=><option key={m}>{m}</option>)}</select></label>
       <label>Preço máximo<input type="number" min="0" step="0.01" value={maxPreco} onChange={e=>setMaxPreco(e.target.value)} placeholder="Sem limite"/></label>
       <label>Categoria<select value={categoria} onChange={e => setCategoria(e.target.value)}><option value="">Todas</option>{available.map(c => <option key={c} value={c}>{cats[c]||(c==="outros"?"Outros":c)}</option>)}</select></label>
       <label>Ordenar<select value={ordem} onChange={e => setOrdem(e.target.value)}><option value="nome">Nome A–Z</option><option value="preco">Menor preço</option><option value="maior">Maior preço</option></select></label>
