@@ -27,21 +27,22 @@ export function CartProvider({ children }) {
   const sincronizarUsuario=useCallback(id=>{
     if(owner.current===id)return;
     const anterior=owner.current;owner.current=id;setUsuarioId(id);const generation=++epoch.current;version.current=-1;
-    if(!id){if(anterior){dispatch({type:"clear"});try{localStorage.removeItem("bbs_cart_draft");}catch{/* Modo privado. */}}return;}
+    if(!id){setSyncBusy(false);setSyncError("");if(anterior){dispatch({type:"clear"});try{localStorage.removeItem("bbs_cart_draft");}catch{/* Modo privado. */}}return;}
     const draft=anterior?{}:cartRef.current;
     setSyncBusy(true);
-    pending.current=(async()=>{
+    const bootstrap=(async()=>{
       if(Object.keys(draft).length){
         try {
           const data=await request("/carrinho/importar",{method:"POST",body:Object.entries(draft).map(([produtoId,p])=>({produtoId:Number(produtoId),quantidade:p.qty}))});
-          receive(data,generation);localStorage.removeItem("bbs_cart_draft");
+          receive(data,generation);if(generation===epoch.current)localStorage.removeItem("bbs_cart_draft");
         } catch(e) {
           receive(await request("/carrinho"),generation);
           if(generation===epoch.current)setSyncError(e.message+" Seu rascunho de visitante foi preservado neste navegador.");
         }
       } else receive(await request("/carrinho"),generation);
     })().catch(e=>{if(generation===epoch.current)setSyncError(e.message);})
-      .finally(()=>{if(generation===epoch.current)setSyncBusy(false);});
+      .finally(()=>{if(generation===epoch.current && pending.current===bootstrap)setSyncBusy(false);});
+    pending.current=bootstrap;
   },[receive]);
   const reload=useCallback(async()=>{
     const generation=epoch.current;await pending.current;

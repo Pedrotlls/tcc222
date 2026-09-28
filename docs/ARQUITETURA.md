@@ -10,9 +10,9 @@ O backend serve as imagens gravadas em disco. Não precisa usar a pasta Front/SL
 | Camada | Responsabilidade |
 | --- | --- |
 | App / Header | Navegação e identificação da sessão |
-| ProductList | Catálogo, busca, categoria, ordenação, detalhes |
-| CartContext / cartState | Rascunho de compra e quantidades no dispositivo |
-| Checkout | Coletar endereço e modalidade, enviar IDs/quantidades e chave |
+| ProductList | Catálogo, sugestões, categoria, marca, preço máximo e avaliações |
+| CartContext / cartState | Rascunho visitante e carrinho da conta sincronizado por API/SSE |
+| Checkout | Endereço, modalidade e cupom; enviar IDs/quantidades e chave |
 | Account | Login, cadastro, perfil, histórico e administração de pedidos |
 | AdminPage | CRUD e imagens de produtos |
 | MobileHome | Tela /mobile com os mesmos serviços da loja |
@@ -27,9 +27,9 @@ O backend serve as imagens gravadas em disco. Não precisa usar a pasta Front/SL
 
 ## Dados
 
-- Produto: nome, descrição, preço, estoque, categoria, imagem, status ativo.
-- Usuario: nome, e-mail único normalizado, hash de senha e perfil.
-- Compra: dono, chave idempotente por usuário, endereço, modalidade, status e totais.
+- Produto: nome, descrição, marca, preço, estoque, categoria, imagem, status ativo.
+- Usuario: nome, e-mail único normalizado, hash de senha, perfil, CPF opcional e versão do carrinho.
+- Compra: dono, chave idempotente por usuário, endereço, modalidade, status, cupom, código interno de acompanhamento e totais.
 - Compra.Item: snapshot de produto, nome, preço e quantidade.
 - Compra.Evento: estado, data da mudança e origem. Estado legado importado não recebe data inventada.
 - bbs_favorito: associação única entre usuário e produto, limite de 200 por conta.
@@ -91,7 +91,7 @@ A interface administrativa não permite promover usuários ou apagar o históric
 }
 ```
 
-Primeiro obtenha o token em /auth/session. Em mutações, envie X-CSRF-TOKEN e mantenha o cookie de sessão. Um cliente não pode escolher o dono, o total ou o perfil administrativo enviando campos extras.
+Primeiro obtenha o token CSRF em /auth/session. Em mutações, envie X-CSRF-TOKEN e mantenha os cookies de CSRF e autenticação. Um cliente não pode escolher o dono, o total ou o perfil administrativo enviando campos extras.
 
 ## Status permitidos
 
@@ -124,3 +124,21 @@ sem peso, dimensões, distância exata ou contrato com transportadora.
 ## Tokens de autenticação
 
 `TokenFilter` consulta o hash do token de acesso em cada requisição. `TokenService` controla validade, rotação e revogação; `TokenCookies` transporta tokens em cookies HttpOnly. `HttpSession` guarda apenas CSRF, sem identidade autenticada. O banco ganhou `bbs_sessao_token` (relação N:1 com `bbs_usuario`); consultar [TOKENS.md](TOKENS.md) para endpoints, campos e regras.
+
+## Carrinho, cupons e avaliações
+
+| Método | Rota | Regra |
+| --- | --- | --- |
+| GET | /carrinho | Carrinho da conta com versão e preços atuais |
+| PATCH | /carrinho | Delta de quantidade; bloqueio por usuário e validação de estoque |
+| POST | /carrinho/importar | Combina rascunho visitante sem duplicar quantidade em reenvios |
+| GET | /carrinho/eventos | SSE autenticado; notifica após commit, sem transportar dados pessoais |
+| POST | /cupons/cotar | Cota desconto pelos IDs/quantidades e preços do servidor |
+| GET/POST | /admin/cupons | Consultar/criar código, percentual, validade e limite |
+| PATCH | /admin/cupons/{codigo} | Alterar ativação |
+| GET | /avaliacoes/{produtoId} | Avaliações públicas, sem identificador do usuário |
+| PUT | /avaliacoes/{produtoId} | Criar/editar a própria avaliação após compra não cancelada |
+
+`bbs_carrinho_item` e `bbs_avaliacao` possuem FKs para usuário/produto e par único. `bbs_cupom` guarda percentual, validade e contador protegido por lock. Cupom substitui o desconto por modalidade; não acumula. Checkout grava pedido, baixa estoque, consome cupom e limpa carrinho em uma transação. Cancelamento não devolve uso do cupom.
+
+O carrinho dispara eventos SSE em uma instância de API e recupera alterações por consulta a cada dez segundos ou ao retornar à aba. Não reserva estoque. Cada navegador autentica-se separadamente; tokens não são compartilhados entre dispositivos. Consulte ESCOPO-ATUAL.md para regras e limites de implantação.

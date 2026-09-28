@@ -7,7 +7,7 @@
 - [ ] Iniciar API e frontend; conferir catálogo carregado.
 - [ ] Definir a senha inicial do administrador sem projetá-la para a sala.
 - [ ] Usar usuários, endereços e senhas fictícios.
-- [ ] Fazer backup do SQL Server pelo SSMS e guardar a pasta de uploads; aplicar 03 e 04 com a API parada.
+- [ ] Fazer backup do SQL Server pelo SSMS e guardar a pasta de uploads; aplicar 03, 04, 05 e 06 com a API parada.
 
 ## Roteiro de 5 a 10 minutos
 
@@ -16,7 +16,7 @@
 3. Cliente: pesquisa, filtro, detalhes, cadastro e carrinho.
 4. Compra: login obrigatório, escolha do endereço salvo e modalidade; a API estima frete por região, quantidade e valor, calcula tudo e gera o pedido.
 5. Administrador: cadastrar cliente, produto com imagem, estoque, pedidos e indicadores.
-6. Mobile: abrir /mobile; entrar na mesma conta, consultar favoritos, endereços e pedidos.
+6. Mobile: abrir /mobile; entrar na mesma conta, mostrar o mesmo carrinho em dois navegadores; consultar endereços e pedidos.
 7. Segurança: usuário comum não altera produtos; cliente não acessa pedidos alheios.
 8. Integridade: compra reduz estoque; cancelamento repõe; duplo clique não duplica.
 9. Conclusão: fluxo acadêmico integrado; explicar honestamente integrações comerciais futuras.
@@ -42,3 +42,11 @@
 - [ ] Reiniciar API mantém usuários, produtos e pedidos.
 
 Esses itens são um roteiro a executar; caixas vazias não representam testes já realizados.
+
+## Ampliação de 28/09/2026
+
+- [ ] Criar cupom no admin e aplicá-lo no checkout; explicar validade e limite.
+- [ ] Filtrar marca e preço; avaliar um produto comprado.
+- [ ] Mostrar código interno do pedido, diferenciando-o de rastreio de transportadora.
+- [ ] Abrir Acessos e segurança, revogar outro acesso e mostrar nova autenticação exigida.
+- [ ] Explicar que nuvem 24/7 e resposta em três segundos ainda exigem implantação e medição.
