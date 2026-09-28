@@ -7,7 +7,7 @@
 - [x] Pedidos, cancelamento, estoque transacional e histórico.
 - [x] Cadastro de cliente pelo admin, CRUD/imagens e estoque baixo.
 - [x] Favoritos persistidos, comparação e interface mobile /mobile.
-- [x] Migrações SQL Server 01, 03 e 04 e roteiro de apresentação.
+- [x] Migrações SQL Server 01, 03, 04, 05 e 06 e roteiro de apresentação.
 - [x] Registrar frontend, backend e SQL Server aprovados em docs/VALIDACAO.md.
 - [x] Tokens HttpOnly com expiração, rotação e revogação.
 - [x] Acessos e segurança no desktop e mobile.

@@ -1,60 +1,55 @@
 # Validação da entrega BBS
 
-## Resultado confirmado
+## Resultado confirmado em 28/09/2026
 
-Execução aprovada em 18/09/2026, conferida em 20/09/2026:
-[GitHub Actions — 35406920922](https://github.com/Pedrotlls/tcc222/actions/runs/35406920922).
-
-Código validado: `4bd8fc4c6c987121e516f16e8f7332877f86eb85`, branch `codex/bbs-completo`.
-Os ajustes de documentação posteriores não alteram o código validado.
+Execução aprovada: [GitHub Actions — 36403235681](https://github.com/Pedrotlls/tcc222/actions/runs/36403235681).
+Código validado: `f1140c2d1316efecadbb8b0a8639550c94b9477d`, branch `codex/bbs-completo`.
+Alterações posteriores exclusivamente documentais não modificam esse código.
 
 | Verificação | Resultado | Alcance |
 | --- | --- | --- |
-| Frontend | Aprovado | 14 testes, ESLint e build Vite |
-| Backend | Aprovado | Compilação Java 17 e 17 testes Maven com H2 |
-| Migrações SQL Server | Aprovado | Scripts 01, 03 e 04; repetição sem perder registros |
-| API com SQL Server | Aprovado | Inicialização com validação do esquema real |
+| Frontend | Aprovado | 21 testes, ESLint e build Vite |
+| Backend | Aprovado | Java 17; 32 testes Maven com H2, sem falhas |
+| Migrações SQL Server | Aprovado | Scripts 01, 03, 04, 05 e 06, inclusive repetição |
+| API com SQL Server | Aprovado | Inicialização e validação do esquema real |
 | Navegador desktop e mobile | Aprovado | Chromium, desktop 1440×1000 e mobile 390×844 |
-| Persistência após reinício | Aprovado | Contas, endereços, favoritos, pedidos, histórico e estoque |
+| Persistência após reinício | Aprovado | Autenticação, carrinho, avaliações, uso do cupom e registros comerciais |
 
-O ambiente SQL Server foi um contêiner descartável SQL Server 2022 Developer no GitHub Actions. Não foi utilizado o banco da escola. A API respondeu de verdade aos testes do navegador, sem simulação das respostas HTTP.
+O banco de teste foi um contêiner descartável SQL Server 2022 Developer no GitHub Actions. Não foi usado o banco da escola. O navegador chamou a API real, sem simular as respostas HTTP. A execução anterior `36402724714` também aprovou o escopo ampliado; a última inclui o ajuste de estado da sincronização ao sair da conta.
 
 ## Fluxos exercitados no navegador
 
-- Login do administrador e cadastro de cliente mantendo a sessão administrativa.
-- Cadastro de produto com upload de imagem, edição, ativação/desativação e exclusão.
-- Filtro de estoque baixo e consulta dos produtos cadastrados.
-- Login do cliente no mobile e cadastro de endereço pela interface.
-- Segundo endereço, troca do principal e exclusão pela API, com índice único SQL Server.
-- Endereço salvo selecionado e preenchido no checkout.
-- Favoritos preservados após recarregar e entre navegador mobile e desktop.
-- Comparação de dois produtos, sem rolagem horizontal da página.
-- Compra mobile com cotação, seleção das quatro modalidades e desconto PIX.
-- Pedido persistido e carrinho limpo após a confirmação.
-- Reenvio idempotente, cancelamento pelo cliente e reposição do estoque.
-- Mudanças RECEBIDO → SEPARANDO → ENVIADO → ENTREGUE e histórico com quatro eventos.
-- Repetição das migrações, reinício da API e leitura dos mesmos registros.
+- Login administrativo; cadastro de cliente com CPF; sessão do administrador preservada.
+- Criação de cupom pela interface, com percentual, validade e limite de usos.
+- CRUD de produto com imagem; ativação, estoque baixo e exclusão permitida.
+- Busca no mobile com filtros de marca e preço máximo.
+- Login na mesma conta em dois navegadores, com carrinho compartilhado e alteração de quantidade refletida no outro aparelho.
+- Endereços salvos, definição de principal, seleção no checkout e isolamento por conta.
+- Favoritos entre navegadores, comparação e ausência de overflow horizontal nos pontos verificados.
+- Compra mobile, frete estimado, modalidades de pagamento e aplicação de cupom de 20%.
+- Total de R$ 334,82: R$ 399,90 − R$ 79,98 + R$ 14,90. O cupom substitui o desconto PIX.
+- Pedido com código interno único; carrinho vazio nos dois navegadores após a confirmação.
+- Avaliação publicada após compra e consultada em outra sessão.
+- Confirmação idempotente, cancelamento, reposição única de estoque e histórico de estados.
+- Renovação do acesso ao remover somente o cookie de acesso; listagem de sessões.
+- Repetição de migrações, reinício da API e recuperação do token, carrinho, avaliação, cupom e pedidos.
 
-Os testes Java também verificam CSRF, permissões administrativas, isolamento entre clientes, endereço de outra conta, validação de dados, limite de endereços, preservação da entrega dos pedidos após excluir o endereço e rejeição de estoque insuficiente. Os testes do frontend cobrem carrinho, quantidades, filtros, comparação e chave de pedido no acesso HTTP por IP.
+Os testes Java verificam também expiração, rotação e reuso de token, revogação, troca de senha, CSRF, autorização, CPF, compra exigida para avaliação, limite/validade de cupons, isolamento do carrinho e importação idempotente. Esses testes não equivalem a um ensaio de carga de múltiplas instâncias.
 
-## Evidências
+## Evidências e limites
 
-O artefato `bbs-desktop-mobile-sqlserver`, na execução acima, contém capturas de catálogo desktop, catálogo mobile, checkout mobile, painel administrativo, estoque e histórico, além dos logs da API antes e depois do reinício. A retenção do artefato é de 14 dias, até 02/10/2026; baixe as evidências antes dessa data se for anexá-las à apresentação.
+O artefato `bbs-desktop-mobile-sqlserver` contém capturas e logs da API, com retenção de 14 dias. As capturas da execução `36402724714` foram revisadas: catálogo, filtros, painel administrativo, estoque, checkout e segurança mobile. São dados fictícios do teste. O arquivo de estado autenticado usado na verificação de reinício é excluído do upload dos artefatos.
 
-As capturas foram revisadas. Os produtos e contas que aparecem nelas são dados fictícios criados pelo teste; não são dados da escola.
+A documentação Word de 28/09/2026 registra o escopo, as onze tabelas, tokens, manuais e evidências. As tabelas de descrição dos problemas foram preservadas. Os campos pessoais não informados permanecem para preenchimento pelos integrantes.
 
-## Conferência no laboratório
+## Instalação e aceitação no laboratório
 
-A validação automatizada não substitui a instalação no computador de apresentação:
+1. Fazer backup do SQL Server, uploads e alterações locais.
+2. Parar a API e aplicar as migrações ausentes: 03, 04, 05 e 06. Em banco novo, começar pelo 01; o 02 é opcional.
+3. Conferir `Back/bbs/application.properties` ou Environment do Spring Tools. O arquivo local é ignorado pelo Git; variáveis antigas têm prioridade.
+4. Iniciar API no Spring Tools e frontend no VS Code; seguir `docs/APRESENTACAO.md`.
+5. Abrir `/mobile` em aparelho físico na rede permitida e repetir o fluxo de apresentação.
 
-1. Fazer backup do SQL Server e da pasta de uploads.
-2. Com a API parada, aplicar 03 e 04. Em banco novo, aplicar antes o 01; o 02 é opcional.
-3. Iniciar Spring Boot no Spring Tools e o frontend no VS Code.
-4. Conferir o fluxo de apresentação em `docs/APRESENTACAO.md`.
-5. Abrir `/mobile` em um aparelho físico na mesma rede e confirmar se a escola permite a comunicação entre dispositivos.
+Pendentes: aceitação na rede/aparelho da escola, escolha e configuração de hospedagem, medição da meta de três segundos e capacidade sob carga. SSE usa uma instância de API, com recuperação periódica a cada dez segundos. O mobile é web, não APK. Pagamentos, frete e acompanhamento são acadêmicos; não há cobrança nem rastreio real de transportadora.
 
-Pagamentos e frete continuam acadêmicos. A interface mobile é web, não APK. Testes de carga e uso comercial não foram homologados. A documentação Word foi atualizada em 20/09/2026 com os endereços implementados, o DER das sete tabelas, os manuais e estas evidências. Os campos pessoais não informados continuam identificados para preenchimento pelos integrantes.
-
-## Atualização de tokens — 28/09/2026
-
-Implementados testes de validade, rotação, reuso, revogação, troca de senha, CSRF e isolamento de acessos. O teste SQL Server/mobile também verifica renovação no navegador e autenticação preservada após reinício. Os resultados da versão anterior acima não certificam esta alteração. Frontend local: 21 testes, lint e build aprovados. Backend local bloqueado por resolução DNS do Maven Central; validação completa desta versão será registrada após o CI.
+Histórico: a execução `35406920922`, em 18/09/2026, aprovou a versão anterior com 14 testes frontend e 17 Java; ela não é a evidência das novas funcionalidades.
