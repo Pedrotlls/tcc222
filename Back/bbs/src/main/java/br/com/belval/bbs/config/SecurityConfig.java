@@ -15,7 +15,7 @@ public class SecurityConfig {
             .addFilterBefore(new br.com.belval.bbs.security.TokenFilter(tokens,cookies),org.springframework.security.web.authentication.AnonymousAuthenticationFilter.class)
             .authorizeHttpRequests(a -> a
                 .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ASYNC).permitAll()
-                .requestMatchers("/auth/session", "/auth/login", "/auth/registro", "/auth/refresh", "/auth/logout", "/error").permitAll()
+                .requestMatchers("/auth/recuperacao", "/auth/recuperacao/confirmar", "/auth/session", "/auth/login", "/auth/registro", "/auth/refresh", "/auth/logout", "/error").permitAll()
                 .requestMatchers(HttpMethod.GET, "/produtos/ativos", "/imagens/**", "/avaliacoes/*").permitAll()
                 .requestMatchers("/produtos/**", "/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())

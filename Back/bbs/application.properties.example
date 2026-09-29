@@ -9,3 +9,14 @@ BBS_ADMIN_EMAIL=admin@bbs.local
 BBS_ADMIN_PASSWORD=
 # Em uma publicação HTTPS, altere para true. Na rede local HTTP, mantenha false.
 BBS_COOKIE_SECURE=false
+
+# Opcional: habilitar "Esqueci minha senha" com um SMTP autorizado.
+BBS_RECOVERY_ENABLED=false
+BBS_PUBLIC_URL=http://localhost:5173/
+BBS_MAIL_FROM=
+BBS_SMTP_HOST=
+BBS_SMTP_PORT=587
+BBS_SMTP_USER=
+BBS_SMTP_PASSWORD=
+BBS_SMTP_AUTH=true
+BBS_SMTP_TLS=true

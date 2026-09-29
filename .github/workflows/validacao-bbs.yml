@@ -60,6 +60,13 @@ jobs:
       BBS_ADMIN_EMAIL: admin@ci.local
       BBS_ADMIN_PASSWORD: AdminCi_Only_2026!
       BBS_E2E: 'true'
+      BBS_RECOVERY_ENABLED: 'true'
+      BBS_MAIL_FROM: bbs@ci.local
+      BBS_PUBLIC_URL: http://127.0.0.1:5173/
+      BBS_SMTP_HOST: 127.0.0.1
+      BBS_SMTP_PORT: '1025'
+      BBS_SMTP_AUTH: 'false'
+      BBS_SMTP_TLS: 'false'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -76,7 +83,7 @@ jobs:
         env:
           SQL_CONTAINER: ${{ job.services.sqlserver.id }}
         run: |
-          for script in database/01_criar_banco.sql database/03_atualizar_funcionalidades.sql database/04_enderecos_clientes.sql database/03_atualizar_funcionalidades.sql database/04_enderecos_clientes.sql database/05_tokens_autenticacao.sql database/05_tokens_autenticacao.sql database/06_escopo_loja.sql database/06_escopo_loja.sql; do
+          for script in database/01_criar_banco.sql database/03_atualizar_funcionalidades.sql database/04_enderecos_clientes.sql database/03_atualizar_funcionalidades.sql database/04_enderecos_clientes.sql database/05_tokens_autenticacao.sql database/05_tokens_autenticacao.sql database/06_escopo_loja.sql database/06_escopo_loja.sql database/07_recuperacao_senha.sql database/07_recuperacao_senha.sql; do
             docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < "$script"
           done
       - run: sh mvnw --batch-mode package -DskipTests
@@ -90,6 +97,7 @@ jobs:
       - name: Iniciar API SQL Server e frontend
         run: |
           mkdir -p Front/bbs-react/test-results
+          (cd Front/bbs-react && node tests/smtp.cjs) &
           java -jar Back/bbs/target/bbs-0.0.1-SNAPSHOT.jar > Front/bbs-react/test-results/api.log 2>&1 &
           echo $! > Front/bbs-react/test-results/api.pid
           npm --prefix Front/bbs-react run dev -- --host 127.0.0.1 > Front/bbs-react/test-results/vite.log 2>&1 &
@@ -115,6 +123,7 @@ jobs:
           docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/04_enderecos_clientes.sql
           docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/05_tokens_autenticacao.sql
           docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/06_escopo_loja.sql
+          docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/07_recuperacao_senha.sql
           java -jar Back/bbs/target/bbs-0.0.1-SNAPSHOT.jar > Front/bbs-react/test-results/api-reinicio.log 2>&1 &
           for attempt in {1..60}; do
             if curl -fsS http://127.0.0.1:5173/api/auth/session > /dev/null; then exit 0; fi
@@ -132,4 +141,5 @@ jobs:
           path: |
             Front/bbs-react/test-results
             !Front/bbs-react/test-results/persistencia.json
+            !Front/bbs-react/test-results/private-mails.json
           retention-days: 14

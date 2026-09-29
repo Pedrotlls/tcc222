@@ -5,25 +5,32 @@ import Cart from "./components/Cart";
 import AdminPage from "./components/AdminPage";
 import Checkout from "./components/Checkout";
 import Account from "./components/Account";
+import PasswordRecovery from "./components/PasswordRecovery";
+const initialResetToken=new URLSearchParams(window.location.hash.slice(1)).get("redefinir") || "";
 import { session } from "./services/api";
 import "./commerce.css";
 import "./storefront.css";
 import HardwareArt from "./components/HardwareArt";
 import MobileHome from "./components/MobileHome";
 import { useCart } from "./context/CartContext";
+import "./experience.css";
 
 export default function App() {
   const {sincronizarUsuario}=useCart();
   const mobile = window.location.pathname.replace(/\/$/, "") === "/mobile";
   const [usuario, setUsuario] = useState(null);
   const [retomarCompra,setRetomarCompra] = useState(false);
-  const [screen, setScreen] = useState(null);
+  const [screen, setScreen] = useState(initialResetToken ? "recuperacao" : null);
+  const [resetToken,setResetToken]=useState(initialResetToken);
+  const [accountTab,setAccountTab]=useState("pedidos");
+  function abrirConta(tab="pedidos"){setAccountTab(typeof tab==="string"?tab:"pedidos");setScreen("conta");}
   const [versao, setVersao] = useState(0);
   const [aviso, setAviso] = useState("");
   const [favoritesOnly,setFavoritesOnly]=useState(false);
   const changed = () => setVersao(v => v + 1);
   useEffect(() => {
     let active = true;
+    if(initialResetToken)window.history.replaceState(null,"",window.location.pathname+window.location.search);
     session().then(data => {if(active) setUsuario(data.usuario);}).catch(() => {if(active) setAviso("API indisponível. Inicie o backend para acessar a loja.");});
     const expired = () => {setUsuario(null);setScreen("conta");setAviso("Sua sessão expirou. Entre novamente.");};
     window.addEventListener("bbs-session-expired", expired);
@@ -37,7 +44,7 @@ export default function App() {
   return <>
     {!mobile && <Header abrirConta={() => setScreen("conta")} usuario={usuario} abrirFavoritos={()=>{setFavoritesOnly(true);document.getElementById("produtos")?.scrollIntoView();}} />}
     {aviso && mobile && <div className="bbs-notice" role="status">{aviso}<button onClick={()=>setAviso("")}>Fechar aviso</button></div>}
-    {mobile ? <MobileHome usuario={usuario} abrirConta={()=>setScreen("conta")} versao={versao} favoritesOnly={favoritesOnly} onFavoritesOnly={setFavoritesOnly}/> : <>
+    {mobile ? <MobileHome usuario={usuario} abrirConta={abrirConta} versao={versao} favoritesOnly={favoritesOnly} onFavoritesOnly={setFavoritesOnly}/> : <>
     <main id="home" className="sf-store">
       <section className="sf-hero" aria-labelledby="sf-title">
         <div className="sf-hero-copy"><span className="sf-eyebrow"><i/> BITS BYTES STORE · HARDWARE & PERFORMANCE</span><h1 id="sf-title">Seu setup.<br/>Seu próximo <em>nível.</em></h1><p>Mais desempenho para jogar, criar e ir além.<br/>Encontre as peças para montar um setup com a sua cara.</p><div className="sf-hero-actions"><a className="sf-cta" href="#produtos">Explorar produtos <span>↗</span></a><a className="sf-secondary" href="#sobre">Conheça a BBS →</a></div><small>Projeto acadêmico · Sem vendas ou pagamentos reais</small></div>
@@ -52,7 +59,8 @@ export default function App() {
     <footer className="sf-footer"><a href="#home" className="sf-footer-logo">BBS.</a><span>Bits Bytes Store · TCC 2026</span><small>Ambiente demonstrativo · Nenhum pagamento real</small><a href="#home">Voltar ao topo ↑</a></footer>
     </>}
     <Cart abrirCheckout={checkout} />
-    {screen === "conta" && <Account usuario={usuario} onUsuario={u => {setUsuario(u);setAviso("");if(u && retomarCompra){setRetomarCompra(false);setScreen("checkout");}}} fechar={() => {setScreen(null);setRetomarCompra(false);}} abrirProdutos={() => setScreen("admin")} onChange={changed} />}
+    {screen === "recuperacao" && <PasswordRecovery token={resetToken} onReset={()=>setUsuario(null)} fechar={()=>{setResetToken("");abrirConta();}}/>}
+    {screen === "conta" && <Account initialTab={accountTab} abrirRecuperacao={()=>{setResetToken("");setScreen("recuperacao");}} usuario={usuario} onUsuario={u => {setUsuario(u);setAviso("");if(u && retomarCompra){setRetomarCompra(false);setScreen("checkout");}}} fechar={() => {setScreen(null);setRetomarCompra(false);}} abrirProdutos={() => setScreen("admin")} onChange={changed} />}
     {screen === "checkout" && usuario && <Checkout fechar={() => setScreen(null)} onComplete={changed}/>}
     {screen === "admin" && usuario?.perfil === "ADMIN" && <AdminPage fechar={() => {changed();setScreen("conta");}} onProdutoSalvo={changed} />}
   </>;

@@ -60,6 +60,49 @@ async function verifyPersistence() {
     console.log('PASS: contas, favoritos, pedidos, histórico e estoque preservados após repetir a migração e reiniciar a API SQL Server.');
   } finally { await ctx.dispose(); }
 }
+
+async function verifyRecovery(browser) {
+  const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  const email=`recuperacao-${Date.now()}@teste.local`;
+  await api(page.request,'/auth/registro','POST',{nome:'Teste Recuperação',email,senha:password});
+  const other=await request.newContext();await loginApi(other,email,password);
+  await page.goto(base+'/mobile');
+  await page.getByRole('button',{name:'Abrir minha conta',exact:true}).click();
+  await page.getByRole('button',{name:'Esqueci minha senha',exact:true}).click();
+  await page.getByLabel('E-mail da conta',{exact:true}).fill(email);
+  await page.getByRole('button',{name:'Enviar link de recuperação',exact:true}).click();
+  await page.getByText(/Se houver uma conta/).waitFor();
+  let mail;
+  for(let i=0;i<50;i++) {
+    mail=JSON.parse(fs.readFileSync('test-results/private-mails.json','utf8')).find(m=>m.includes(email));
+    if(mail)break;await new Promise(r=>setTimeout(r,100));
+  }
+  assert(mail,'Mensagem de recuperação não recebida no SMTP local');
+  const parts=mail.split('\r\n\r\n');
+  let body=parts.slice(1).join('\r\n\r\n');
+  if(/Content-Transfer-Encoding: base64/i.test(parts[0]))body=Buffer.from(body.replace(/\s/g,''),'base64').toString('utf8');
+  else body=body.replace(/=\r\n/g,'').replace(/=3D/gi,'=');
+  const token=body.match(/#redefinir=([A-Za-z0-9_-]{43})/)?.[1];assert(token,'Link de recuperação ausente');
+  await page.goto(base+'/mobile#redefinir='+token);
+  await page.getByLabel('Nova senha',{exact:true}).fill('NovaSenhaE2e_2026!');
+  await page.getByLabel('Confirmar nova senha',{exact:true}).fill('NovaSenhaE2e_2026!');
+  await page.getByRole('button',{name:'Salvar nova senha',exact:true}).click();
+  await page.getByText('Senha atualizada. Entre novamente em seus aparelhos.',{exact:true}).waitFor();
+  assert.equal(new URL(page.url()).hash,'');
+  await noOverflow(page,'dialog[open]');
+  await page.screenshot({path:'test-results/mobile-recuperacao.png',fullPage:true});
+  assert.equal((await other.get(base+'/api/pedidos')).status(),401);
+  const {csrf}=await api(page.request,'/auth/session');
+  const retry=await page.request.post(base+'/api/auth/recuperacao/confirmar',{data:{token,senha:'OutraSenha12345'},headers:{'X-CSRF-TOKEN':csrf}});
+  assert.equal(retry.status(),400);
+  await page.getByRole('button',{name:'Voltar ao login',exact:true}).click();
+  await page.getByLabel('E-mail',{exact:true}).fill(email);
+  await page.getByLabel('Senha',{exact:true}).fill('NovaSenhaE2e_2026!');
+  await page.getByRole('button',{name:'Entrar',exact:true}).click();
+  await page.getByRole('button',{name:'Editar perfil',exact:true}).waitFor();
+  await other.dispose();await page.close();
+}
+
 async function run() {
   if (process.argv.includes('--verify')) return verifyPersistence();
   const browser = await chromium.launch({ headless: true });
@@ -244,6 +287,22 @@ async function run() {
     await syncClient.getByRole('button',{name:'Carrinho (1)',exact:true}).waitFor();
     const authState=await phone.context().storageState();
     fs.writeFileSync('test-results/persistencia.json', JSON.stringify({ authState, email, carrinhoProdutoId:p2.id, enderecoId: enderecoSalvo.id, produtoId: p1.id, pedidoId: pedido.id, canceladoId: segundo.id }));
+    await desktop.getByRole('button',{name:'Relatórios de vendas',exact:true}).click();
+    await desktop.getByRole('heading',{name:'Produtos mais vendidos',exact:true}).waitFor();
+    const hoje=new Date().toISOString().slice(0,10);
+    const report=await api(desktop.request,`/admin/relatorios?inicio=${hoje}&fim=${hoje}`);
+    assert.equal(report.pedidos,1);assert.equal(report.cancelados,1);assert.equal(Number(report.valor),334.82);
+    const download=desktop.waitForEvent('download');
+    await desktop.getByRole('button',{name:'Exportar CSV ↓',exact:true}).click();
+    assert((await download).suggestedFilename().startsWith('BBS-vendas-'));
+    await noOverflow(desktop,'dialog[open]');
+    await desktop.screenshot({path:'test-results/admin-relatorios.png',fullPage:true});
+    await phone.locator('dialog[open]').getByRole('button',{name:'Fechar',exact:true}).click();
+    await phone.getByRole('button',{name:'Endereços Entrega pronta',exact:false}).click();
+    await phone.getByRole('heading',{name:'Meus endereços',exact:true}).first().waitFor();
+    await phone.locator('dialog[open]').getByRole('button',{name:'Fechar',exact:true}).click();
+    await noOverflow(phone);await phone.screenshot({path:'test-results/mobile-atalhos.png',fullPage:true});
+    await verifyRecovery(browser);
     assert.deepEqual(errors, []);
     console.log('PASS: cliente cadastrado pelo admin, sessão mantida, produto com imagem, edição, status, exclusão, estoque baixo, favoritos entre dispositivos, comparação, compra mobile, cotação, desconto, idempotência, cancelamento, estoque e histórico SQL Server.');
   } catch (error) {

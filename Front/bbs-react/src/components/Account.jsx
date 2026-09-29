@@ -5,17 +5,18 @@ import "./admin.css";
 import Addresses from "./Addresses";
 import Sessions from "./Sessions";
 import Coupons from "./Coupons";
+import Reports from "./Reports";
 import OrderHistory from "./OrderHistory";
 import "./features.css";
 const money = value => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const steps = { RECEBIDO: ["SEPARANDO", "CANCELADO"], SEPARANDO: ["ENVIADO", "CANCELADO"], ENVIADO: ["ENTREGUE"], ENTREGUE: [], CANCELADO: [] };
-export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onChange }) {
+export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onChange, abrirRecuperacao, initialTab = "pedidos" }) {
   const [cadastro, setCadastro] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [pedidos, setPedidos] = useState([]);
   const [clientes, setClientes] = useState([]);
-  const [tab, setTab] = useState("pedidos");
+  const [tab, setTab] = useState(initialTab);
   const [loading, setLoading] = useState(Boolean(usuario));
   const [revision, setRevision] = useState(0);
   const [novoCliente,setNovoCliente] = useState(false);
@@ -88,6 +89,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
       <label>Senha<input name="senha" type="password" required minLength={cadastro ? 8 : 1} maxLength={64} autoComplete={cadastro ? "new-password" : "current-password"} /></label>
       <button className="bbs-primary" disabled={busy}>{busy ? "Aguarde…" : cadastro ? "Cadastrar e entrar" : "Entrar"}</button>
       <button type="button" disabled={busy} onClick={() => {setCadastro(!cadastro);setError("");}}>{cadastro ? "Já tenho conta" : "Quero criar uma conta"}</button>
+      {!cadastro && <button type="button" className="forgot-link" onClick={abrirRecuperacao}>Esqueci minha senha</button>}
       <p>Projeto acadêmico. Use dados fictícios para a apresentação.</p>
     </form> : <>
       <div className={admin ? "adm-layout" : "account-layout"}>
@@ -96,6 +98,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
         <div className="adm-user"><b>{usuario.nome}</b><small>{usuario.email}</small></div>
         <button aria-pressed={tab==="pedidos"} onClick={() => setTab("pedidos")}>{admin ? "Visão geral e pedidos" : "Meus pedidos"}</button>
         {admin && <><button aria-pressed={tab==="clientes"} onClick={() => setTab("clientes")}>Clientes e usuários</button><button onClick={abrirProdutos}>Gerenciar produtos ↗</button></>}
+        {admin && <button aria-pressed={tab==="relatorios"} onClick={()=>setTab("relatorios")}>Relatórios de vendas</button>}
         {admin && <button aria-pressed={tab==="cupons"} onClick={()=>setTab("cupons")}>Cupons de desconto</button>}
         <button aria-pressed={tab==="enderecos"} onClick={() => setTab("enderecos")}>Meus endereços</button>
         <button aria-pressed={tab==="perfil"} onClick={() => setTab("perfil")}>Editar perfil</button>
@@ -104,8 +107,8 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
         <button disabled={busy} onClick={sair}>Sair</button>
       </div>
       <div className={admin ? "adm-content" : "account-content"}>
-      <div className="adm-page-heading"><div><small>{admin ? "ADMINISTRAÇÃO / " : "MINHA CONTA / "}{tab.toUpperCase()}</small><h2>{tab==="cupons"?"Cupons de desconto":tab==="sessoes"?"Acessos e segurança":tab==="enderecos"?"Meus endereços":tab==="perfil"?"Seu perfil":tab==="clientes"?"Clientes e usuários":admin?"Visão geral":"Meus pedidos"}</h2></div><button disabled={busy || loading} onClick={() => {setLoading(true);setRevision(v => v+1);}}>↻ Atualizar</button></div>
-      {tab === "cupons" && admin ? <Coupons/> : tab === "sessoes" ? <Sessions key={revision} onLogout={() => {onUsuario(null);fechar();}}/> : tab === "enderecos" ? <Addresses/> : tab === "perfil" ? <form className="bbs-form" onSubmit={perfil}>
+      <div className="adm-page-heading"><div><small>{admin ? "ADMINISTRAÇÃO / " : "MINHA CONTA / "}{tab.toUpperCase()}</small><h2>{tab==="relatorios"?"Relatórios de vendas":tab==="cupons"?"Cupons de desconto":tab==="sessoes"?"Acessos e segurança":tab==="enderecos"?"Meus endereços":tab==="perfil"?"Seu perfil":tab==="clientes"?"Clientes e usuários":admin?"Visão geral":"Meus pedidos"}</h2></div><button disabled={busy || loading} onClick={() => {setLoading(true);setRevision(v => v+1);}}>↻ Atualizar</button></div>
+      {tab === "relatorios" && admin ? <Reports key={revision}/> : tab === "cupons" && admin ? <Coupons/> : tab === "sessoes" ? <Sessions key={revision} onLogout={() => {onUsuario(null);fechar();}}/> : tab === "enderecos" ? <Addresses/> : tab === "perfil" ? <form className="bbs-form" onSubmit={perfil}>
         <label>Nome<input name="nome" defaultValue={usuario.nome} required minLength={2} maxLength={100}/></label>
         <label>CPF (opcional — preencher para atualizar)<input name="cpf" inputMode="numeric" maxLength={14}/></label>
         <p>Preencha as duas senhas apenas se quiser alterar sua senha.</p>

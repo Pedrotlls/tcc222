@@ -1,3 +1,4 @@
+import MobileSummary from "./MobileSummary";
 import ProductList from "./ProductList";
 import { useCart } from "../context/CartContext";
 import HardwareArt from "./HardwareArt";
@@ -9,6 +10,7 @@ export default function MobileHome({usuario,abrirConta,versao,favoritesOnly,onFa
     <header className="mobile-header"><a href="/mobile" aria-label="BBS mobile início">BBS<span>.</span></a><span>SEU SETUP NA MÃO</span><button onClick={abrirConta} aria-label="Abrir minha conta">{usuario?usuario.nome.slice(0,1).toUpperCase():"Entrar"}</button></header>
     <main id="home" className="sf-store mobile-screen">
       <section className="mobile-welcome"><small>{usuario?`Olá, ${usuario.nome.split(" ")[0]}!`:"BEM-VINDO À BBS"}</small><h1>Qual é o seu<br/><em>próximo upgrade?</em></h1><p>Explore, escolha e monte seu setup.</p><div className="mobile-hero-art"><HardwareArt tipo="gpu"/></div><a href="#produtos">Explorar catálogo ↗</a></section>
+      <MobileSummary usuario={usuario} versao={versao} abrirConta={abrirConta}/>
       <p className="mobile-demo">Loja acadêmica · Sem pagamentos ou entregas reais</p>
       <ProductList versao={versao} usuario={usuario} abrirConta={abrirConta} favoritesOnly={favoritesOnly} onFavoritesOnly={onFavoritesOnly}/>
       <section className="mobile-account-card"><h2>Seu pedido está aqui.</h2><p>Entre na sua conta para acompanhar os pedidos e atualizar seu perfil.</p><button onClick={abrirConta}>Abrir minha conta →</button></section>

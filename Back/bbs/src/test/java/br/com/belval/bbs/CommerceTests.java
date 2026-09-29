@@ -250,4 +250,24 @@ class CommerceTests {
             .andExpect(status().isCreated()).andExpect(jsonPath("$.cpf").doesNotExist());
         assertThat(usuarios.findByEmail("cpf@teste.local").orElseThrow().cpf).isEqualTo("52998224725");
     }
+    @Test void relatoriosExcluemCanceladosERestringemAdmin() throws Exception {
+        for(String chave:List.of("relatorio-a","relatorio-b"))mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(pedido(1,chave))).andExpect(status().isCreated());
+        long id=compras.findAll().get(0).id;
+        mvc.perform(patch("/pedidos/"+id+"/cancelar").with(user("cliente@teste.local")).with(csrf())).andExpect(status().isOk());
+        String hoje=java.time.LocalDate.now().toString();
+        String path="/admin/relatorios?inicio="+hoje+"&fim="+hoje;
+        mvc.perform(get(path)).andExpect(status().isUnauthorized());
+        mvc.perform(get(path).with(user("cliente@teste.local"))).andExpect(status().isForbidden());
+        mvc.perform(get(path).with(user("admin@teste.local").roles("ADMIN"))).andExpect(status().isOk())
+            .andExpect(jsonPath("$.pedidos").value(1)).andExpect(jsonPath("$.cancelados").value(1))
+            .andExpect(jsonPath("$.valor").value(104.9)).andExpect(jsonPath("$.ticketMedio").value(104.9))
+            .andExpect(jsonPath("$.produtos[0].unidades").value(1)).andExpect(jsonPath("$.produtos[0].subtotal").value(100))
+            .andExpect(jsonPath("$.dias[0].pedidos").value(1));
+    }
+    @Test void relatoriosValidamPeriodoESemMovimento() throws Exception {
+        for(String periodo:List.of("inicio=2026-09-28&fim=2026-09-01","inicio=2020-01-01&fim=2026-09-28"))
+            mvc.perform(get("/admin/relatorios?"+periodo).with(user("admin@teste.local").roles("ADMIN"))).andExpect(status().isBadRequest());
+        mvc.perform(get("/admin/relatorios?inicio=2001-01-01&fim=2001-01-31").with(user("admin@teste.local").roles("ADMIN")))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.pedidos").value(0)).andExpect(jsonPath("$.valor").value(0)).andExpect(jsonPath("$.produtos.length()").value(0));
+    }
 }
