@@ -32,9 +32,14 @@ export default function App() {
     let active = true;
     if(initialResetToken)window.history.replaceState(null,"",window.location.pathname+window.location.search);
     session().then(data => {if(active) setUsuario(data.usuario);}).catch(() => {if(active) setAviso("API indisponível. Inicie o backend para acessar a loja.");});
+    const recoveryLink = () => {
+      const token=new URLSearchParams(window.location.hash.slice(1)).get("redefinir");
+      if(token){setResetToken(token);setScreen("recuperacao");window.history.replaceState(null,"",window.location.pathname+window.location.search);}
+    };
+    window.addEventListener("hashchange",recoveryLink);
     const expired = () => {setUsuario(null);setScreen("conta");setAviso("Sua sessão expirou. Entre novamente.");};
     window.addEventListener("bbs-session-expired", expired);
-    return () => {active=false;window.removeEventListener("bbs-session-expired",expired);};
+    return () => {active=false;window.removeEventListener("bbs-session-expired",expired);window.removeEventListener("hashchange",recoveryLink);};
   }, []);
   useEffect(()=>{sincronizarUsuario(usuario?.id || null);},[usuario?.id,sincronizarUsuario]);
   function checkout() {
@@ -59,7 +64,7 @@ export default function App() {
     <footer className="sf-footer"><a href="#home" className="sf-footer-logo">BBS.</a><span>Bits Bytes Store · TCC 2026</span><small>Ambiente demonstrativo · Nenhum pagamento real</small><a href="#home">Voltar ao topo ↑</a></footer>
     </>}
     <Cart abrirCheckout={checkout} />
-    {screen === "recuperacao" && <PasswordRecovery token={resetToken} onReset={()=>setUsuario(null)} fechar={()=>{setResetToken("");abrirConta();}}/>}
+    {screen === "recuperacao" && <PasswordRecovery key={resetToken || "solicitar"} token={resetToken} onReset={()=>setUsuario(null)} fechar={()=>{setResetToken("");abrirConta();}}/>}
     {screen === "conta" && <Account initialTab={accountTab} abrirRecuperacao={()=>{setResetToken("");setScreen("recuperacao");}} usuario={usuario} onUsuario={u => {setUsuario(u);setAviso("");if(u && retomarCompra){setRetomarCompra(false);setScreen("checkout");}}} fechar={() => {setScreen(null);setRetomarCompra(false);}} abrirProdutos={() => setScreen("admin")} onChange={changed} />}
     {screen === "checkout" && usuario && <Checkout fechar={() => setScreen(null)} onComplete={changed}/>}
     {screen === "admin" && usuario?.perfil === "ADMIN" && <AdminPage fechar={() => {changed();setScreen("conta");}} onProdutoSalvo={changed} />}
