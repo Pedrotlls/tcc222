@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
+@org.springframework.context.annotation.Profile({"demo", "test"})
 public class DataSeeder implements ApplicationRunner {
 
     /*

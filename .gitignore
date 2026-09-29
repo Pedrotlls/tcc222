@@ -32,3 +32,15 @@ build/
 ### VS Code ###
 .vscode/
 /.metadata/
+**/.metadata/
+**/node_modules/
+**/dist/
+**/data/
+**/uploads/
+.env
+.env.local
+.sites-runtime/
+**/test-results/
+
+# Configuração particular do computador (contém senhas)
+/Back/bbs/application.properties

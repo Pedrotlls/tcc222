@@ -1,136 +1,85 @@
-// ============================================================
-//  CartContext.jsx  —  Estado global do carrinho
-//  Usa a Context API do React para compartilhar dados do carrinho
-//  (itens, quantidades, frete, total) com qualquer componente
-//  sem precisar passar props entre componentes pai/filho.
-// ============================================================
-
-import { createContext, useContext, useState, useCallback } from 'react';
-
-// Cria o contexto vazio. Será preenchido pelo CartProvider abaixo.
+import { createContext, useContext, useReducer, useState, useEffect, useCallback, useRef } from "react";
+import { cartReducer, readCart } from "./cartState";
+import { request, session } from "../services/api";
 const CartContext = createContext(null);
-
-// ── CartProvider ──────────────────────────────────────────────
-// Componente que envolve o app (em main.jsx) e disponibiliza
-// todas as funções e dados do carrinho para os filhos.
 export function CartProvider({ children }) {
-  /*
-   * CartProvider = “pai” do contexto do carrinho.
-   * Tudo que o sistema precisa lembrar durante a sessão do usuário
-   * (itens, quantidade, frete, total e abertura da sidebar) fica aqui.
-   */
-
-
-  // Objeto onde cada chave é o id do produto e o valor contém
-  // { name, price, img, qty }. Exemplo: { 1: { name:"RTX 3060", qty:2, ... } }
-  const [cart, setCart] = useState({});
-
-  // Array com os IDs dos produtos na ordem em que foram adicionados.
-  // Separado do cart para preservar a ordem de inserção.
-  const [cartOrder, setCartOrder] = useState([]);
-
-  // Valor do frete em reais (atualizado após calcular pelo CEP)
-  const [freteGlobal, setFreteGlobal] = useState(0);
-
-  // Texto descritivo do frete, ex: "🚚 Entrega para São Paulo - SP"
-  const [freteInfo, setFreteInfo] = useState('');
-
-  // Controla se a sidebar do carrinho está visível (true) ou oculta (false)
-  const [isOpen, setIsOpen] = useState(false);
-
-  // ── addToCart ─────────────────────────────────────────────
-  // Adiciona um produto ao carrinho.
-  // Se o produto já existe → incrementa a quantidade.
-  // Se é novo → cria a entrada e adiciona o id em cartOrder.
-  // Ao final, abre a sidebar automaticamente.
-  const addToCart = useCallback((id, name, price, img) => {
-    setCart(prev => {
-      if (prev[id]) {
-        // Produto já no carrinho: apenas incrementa qty
-        return { ...prev, [id]: { ...prev[id], qty: prev[id].qty + 1 } };
-      }
-      // Produto novo: cria a entrada com qty = 1
-      return { ...prev, [id]: { name, price, img, qty: 1 } };
-    });
-    // Adiciona o id no início da lista (novo item aparece primeiro na sidebar)
-    setCartOrder(prev => prev.includes(id) ? prev : [id, ...prev]);
-    // Abre a sidebar do carrinho
-    setIsOpen(true);
-  }, []);
-
-  // ── changeQty ────────────────────────────────────────────
-  // Incrementa ou decrementa a quantidade de um produto.
-  // delta = +1 (adiciona) ou -1 (remove uma unidade).
-  // Se a quantidade chegar a 0 ou menos, remove o produto do carrinho.
-  const changeQty = useCallback((id, delta) => {
-    setCart(prev => {
-      const item = prev[id];
-      if (!item) return prev;
-      const newQty = item.qty + delta;
-      if (newQty <= 0) {
-        // Remove o produto: desestrutura o objeto sem a chave [id]
-        const { [id]: _, ...rest } = prev;
-        // Remove também da lista de ordem
-        setCartOrder(o => o.filter(i => i !== id));
-        return rest;
-      }
-      return { ...prev, [id]: { ...item, qty: newQty } };
-    });
-  }, []);
-
-  // ── limparCarrinho ───────────────────────────────────────
-  // Zera completamente o carrinho após a compra ser confirmada no Checkout.
-  const limparCarrinho = useCallback(() => {
-    setCart({});
-    setCartOrder([]);
-    setFreteGlobal(0);
-    setFreteInfo('');
-  }, []);
-
-  // ── Valores calculados ────────────────────────────────────
-
-  // Soma total de unidades no carrinho (exibida no ícone do header)
-  const totalQty = cartOrder.reduce((acc, id) => acc + (cart[id]?.qty || 0), 0);
-
-  // Soma dos preços × quantidades (sem frete)
-  const subtotal = cartOrder.reduce(
-    (acc, id) => acc + (cart[id] ? cart[id].price * cart[id].qty : 0),
-    0
-  );
-
-  // Total final = subtotal + frete
-  const total = subtotal + freteGlobal;
-
-  // ── Valor exposto para todos os componentes filhos ────────
-  return (
-    <CartContext.Provider value={{
-      cart,          // Objeto com todos os itens do carrinho
-      cartOrder,     // Array com os IDs em ordem de inserção
-      freteGlobal,   // Valor do frete calculado
-      setFreteGlobal,
-      freteInfo,     // Texto descritivo do frete
-      setFreteInfo,
-      isOpen,        // Se a sidebar está aberta
-      setIsOpen,
-      addToCart,     // Função para adicionar produto
-      changeQty,     // Função para alterar quantidade
-      limparCarrinho,// Função para zerar o carrinho
-      totalQty,      // Total de unidades (para o badge do carrinho)
-      subtotal,      // Soma dos produtos sem frete
-      total,         // Total com frete incluído
-    }}>
-      {children}
-    </CartContext.Provider>
-  );
+  const [cart,dispatch]=useReducer(cartReducer,undefined,readCart);
+  const cartRef=useRef(cart);
+  const owner=useRef(undefined);
+  const epoch=useRef(0);
+  const version=useRef(-1);
+  const pending=useRef(Promise.resolve());
+  const [usuarioId,setUsuarioId]=useState(null);
+  const [syncError,setSyncError]=useState("");
+  const [syncBusy,setSyncBusy]=useState(false);
+  const [freteGlobal,setFreteGlobal]=useState(0);
+  const [freteInfo,setFreteInfo]=useState("");
+  const [isOpen,setIsOpen]=useState(false);
+  useEffect(() => {
+    cartRef.current=cart;
+    // Apenas o carrinho de visitante é armazenado neste navegador.
+    if(!owner.current)try {localStorage.setItem("bbs_cart_draft",JSON.stringify(cart));} catch { /* Modo privado. */ }
+  },[cart]);
+  const receive=useCallback((data,generation)=>{
+    if(generation!==epoch.current || data.versao<version.current)return;
+    version.current=data.versao;dispatch({type:"replace",cart:data.itens});setSyncError("");
+  },[]);
+  const sincronizarUsuario=useCallback(id=>{
+    if(owner.current===id)return;
+    const anterior=owner.current;owner.current=id;setUsuarioId(id);const generation=++epoch.current;version.current=-1;
+    if(!id){setSyncBusy(false);setSyncError("");if(anterior){dispatch({type:"clear"});try{localStorage.removeItem("bbs_cart_draft");}catch{/* Modo privado. */}}return;}
+    const draft=anterior?{}:cartRef.current;
+    setSyncBusy(true);
+    const bootstrap=(async()=>{
+      if(Object.keys(draft).length){
+        try {
+          const data=await request("/carrinho/importar",{method:"POST",body:Object.entries(draft).map(([produtoId,p])=>({produtoId:Number(produtoId),quantidade:p.qty}))});
+          receive(data,generation);if(generation===epoch.current)localStorage.removeItem("bbs_cart_draft");
+        } catch(e) {
+          receive(await request("/carrinho"),generation);
+          if(generation===epoch.current)setSyncError(e.message+" Seu rascunho de visitante foi preservado neste navegador.");
+        }
+      } else receive(await request("/carrinho"),generation);
+    })().catch(e=>{if(generation===epoch.current)setSyncError(e.message);})
+      .finally(()=>{if(generation===epoch.current && pending.current===bootstrap)setSyncBusy(false);});
+    pending.current=bootstrap;
+  },[receive]);
+  const reload=useCallback(async()=>{
+    const generation=epoch.current;await pending.current;
+    if(!owner.current || generation!==epoch.current)return;
+    try{receive(await request("/carrinho"),generation);}catch(e){if(generation===epoch.current)setSyncError(e.message);}
+  },[receive]);
+  useEffect(()=>{
+    if(!usuarioId)return;
+    let stream,closed=false;
+    const open=async()=>{
+      try{
+        const data=await session();if(closed || !data.usuario)return;
+        stream=new EventSource((import.meta.env?.VITE_API_BASE || "/api")+"/carrinho/eventos",{withCredentials:true});
+        stream.addEventListener("carrinho",reload);
+      }catch{/* A consulta periódica mantém recuperação da conexão. */}
+    };
+    open();const timer=setInterval(reload,10000);window.addEventListener("focus",reload);
+    return ()=>{closed=true;stream?.close();clearInterval(timer);window.removeEventListener("focus",reload);};
+  },[usuarioId,reload]);
+  const change=useCallback((id,delta)=>{
+    const generation=epoch.current;setSyncBusy(true);
+    const job=pending.current.then(async()=>{
+      if(generation!==epoch.current)return;
+      receive(await request("/carrinho",{method:"PATCH",body:{produtoId:Number(id),delta}}),generation);
+    }).catch(e=>{if(generation===epoch.current)setSyncError(e.message);})
+      .finally(()=>{if(generation===epoch.current && pending.current===job)setSyncBusy(false);});
+    pending.current=job;
+  },[receive]);
+  const addToCart=useCallback((id,name,price,img,stock) => {
+    if(owner.current)change(id,1);else dispatch({type:"add",id,name,price,img,stock});setIsOpen(true);
+  },[change]);
+  const changeQty=useCallback((id,delta) => {if(owner.current)change(id,delta);else dispatch({type:"qty",id,delta});},[change]);
+  const limparCarrinho=useCallback(() => {dispatch({type:"clear"});setFreteGlobal(0);setFreteInfo("");setIsOpen(false);try{localStorage.setItem("bbs_cart_draft","{}");}catch{/* Modo privado. */}if(owner.current)reload();},[reload]);
+  const cartOrder=Object.keys(cart);
+  const totalQty=cartOrder.reduce((n,id) => n+cart[id].qty,0);
+  const subtotal=cartOrder.reduce((n,id) => n+cart[id].qty*cart[id].price,0);
+  return <CartContext.Provider value={{cart,cartOrder,totalQty,subtotal,total:subtotal+freteGlobal,freteGlobal,setFreteGlobal,freteInfo,setFreteInfo,isOpen,setIsOpen,addToCart,changeQty,limparCarrinho,sincronizarUsuario,syncError,syncBusy,reload}}>{children}</CartContext.Provider>;
 }
-
-// ── useCart ───────────────────────────────────────────────────
-// Hook personalizado: qualquer componente que queira acessar o
-// carrinho chama useCart() em vez de lidar com o contexto direto.
-export function useCart() {
-  // Hook “ponteiro” para os componentes: pega o valor do CartContext
-  // (tudo que está dentro de <CartContext.Provider value={...}>)
-  // e retorna para o componente consumidor.
-  return useContext(CartContext);
-}
-
+// eslint-disable-next-line react-refresh/only-export-components
+export function useCart(){return useContext(CartContext);}

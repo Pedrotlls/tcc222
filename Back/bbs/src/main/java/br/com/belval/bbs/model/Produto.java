@@ -68,8 +68,10 @@ public class Produto {
     // Nome exibido na UI e usado em busca por nome
     private String nome;
     // Descrição exibida e usada em busca por descrição
+    @jakarta.persistence.Column(length = 4000)
     private String descricao;
     // Preço do produto (BigDecimal para não perder precisão)
+    @jakarta.persistence.Column(precision = 16, scale = 2)
     private BigDecimal preco;
     // Quantidade disponível em estoque
     private Integer estoque;
@@ -82,6 +84,9 @@ public class Produto {
     private String imgUrl;
     // "categoria"/tipo textual (ex: gpu, cpu, ram...) para agrupar no front
     private String tipo;
+    @jakarta.persistence.Column(length=80) private String marca;
+    public String getMarca(){return marca;}
+    public void setMarca(String marca){this.marca=marca;}
 
     /*
      * Status de visibilidade na loja.
