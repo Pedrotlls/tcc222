@@ -1,5 +1,7 @@
 # Bits Bytes Store — TCC 2026
 
+**Atualização de 29/09/2026:** execute também `database/07_recuperacao_senha.sql` depois do 06, com a API parada. Novo visual, atalhos mobile, relatórios e recuperação por e-mail. [Responsabilidades, instalação e configuração SMTP](docs/RECUPERACAO-E-RELATORIOS.md).
+
 Loja acadêmica de hardware em React, Spring Boot e **SQL Server**.
 O frontend roda no **VS Code** e o backend no **Spring Tools**.
 Pedidos, frete e modalidades de pagamento são demonstrativos: não existe cobrança ou entrega real.

@@ -1,24 +1,27 @@
 # Validação da entrega BBS
 
-## Resultado confirmado em 28/09/2026
+## Resultado confirmado em 29/09/2026
 
-Execução aprovada: [GitHub Actions — 36468985280](https://github.com/Pedrotlls/tcc222/actions/runs/36468985280).
-Código validado: `8f933925e4d9b30f7e7ba277c04044564db5bba1`, branch `codex/bbs-completo`.
+Execução aprovada: [GitHub Actions — 36576461265](https://github.com/Pedrotlls/tcc222/actions/runs/36576461265).
+Código validado: `f511b9df519040f6d36fd0d5a620a301c4a7466a`, branch `codex/bbs-completo`.
 Alterações posteriores exclusivamente documentais não modificam esse código.
 
 | Verificação | Resultado | Alcance |
 | --- | --- | --- |
-| Frontend | Aprovado | 21 testes, ESLint e build Vite |
-| Backend | Aprovado | Java 17; 35 testes Maven com H2, sem falhas |
-| Migrações SQL Server | Aprovado | Scripts 01, 03, 04, 05 e 06, inclusive repetição |
+| Frontend | Aprovado | 23 testes, ESLint e build Vite |
+| Backend | Aprovado | Java 17; 44 testes Maven com H2, sem falhas |
+| Migrações SQL Server | Aprovado | Scripts 01, 03, 04, 05, 06 e 07, inclusive repetição |
 | API com SQL Server | Aprovado | Inicialização e validação do esquema real |
 | Navegador desktop e mobile | Aprovado | Chromium, desktop 1440×1000 e mobile 390×844 |
 | Persistência após reinício | Aprovado | Autenticação, carrinho, avaliações, uso do cupom e registros comerciais |
 
-O banco de teste foi um contêiner descartável SQL Server 2022 Developer no GitHub Actions. Não foi usado o banco da escola. O navegador chamou a API real, sem simular as respostas HTTP. A execução anterior `36402724714` também aprovou o escopo ampliado; a última inclui o ajuste de estado da sincronização ao sair da conta e a correção de desconexões SSE. A execução intermediária 36403693696 detectou um erro 500 após gravar o carrinho: o encerramento duplicado de uma conexão já fechada propagava uma exceção. O tratamento foi corrigido e três testes de regressão cobrem desconexão, emissão após encerramento e substituição da conexão mais antiga.
+O banco de teste foi um contêiner descartável SQL Server 2022 Developer no GitHub Actions. Não foi usado o banco da escola. O navegador chamou a API real, sem simular as respostas HTTP. A atualização também aprovou relatórios, exportação CSV, atalhos mobile e recuperação de senha com servidor SMTP local de teste. A primeira tentativa identificou que abrir o link de recuperação na mesma aba não atualizava a tela; o tratamento de mudança de fragmento foi corrigido e o fluxo completo foi aprovado.
 
 ## Fluxos exercitados no navegador
 
+- Recuperação de senha: solicitação pela interface, link de uso único, abertura na mesma aba, redefinição e novo login; acessos anteriores revogados e reuso do link rejeitado.
+- Relatórios: período, totais, cancelados fora dos valores, ranking e download CSV.
+- Atalhos mobile para endereços, pedidos e segurança, com resumo do carrinho e último pedido.
 - Login administrativo; cadastro de cliente com CPF; sessão do administrador preservada.
 - Criação de cupom pela interface, com percentual, validade e limite de usos.
 - CRUD de produto com imagem; ativação, estoque baixo e exclusão permitida.
@@ -38,18 +41,20 @@ Os testes Java verificam também expiração, rotação e reuso de token, revoga
 
 ## Evidências e limites
 
-O artefato `bbs-desktop-mobile-sqlserver` contém capturas e logs da API, com retenção de 14 dias. As capturas da execução `36402724714` foram revisadas: catálogo, filtros, painel administrativo, estoque, checkout e segurança mobile. São dados fictícios do teste. O arquivo de estado autenticado usado na verificação de reinício é excluído do upload dos artefatos.
+O artefato `bbs-desktop-mobile-sqlserver` contém capturas e logs da API, com retenção de 14 dias. As capturas do novo painel, relatórios, catálogo e atalhos mobile foram revisadas. São dados fictícios do teste. O arquivo de estado autenticado e a caixa SMTP de teste, que contêm credenciais temporárias, são excluídos dos artefatos.
 
-A documentação Word de 28/09/2026 registra o escopo, as onze tabelas, tokens, manuais e evidências. As tabelas de descrição dos problemas foram preservadas. Os campos pessoais não informados permanecem para preenchimento pelos integrantes.
+A documentação Word de 29/09/2026 registra o escopo, as doze tabelas, tokens, manuais e evidências. As tabelas de descrição dos problemas foram preservadas. Os campos pessoais não informados permanecem para preenchimento pelos integrantes.
 
 ## Instalação e aceitação no laboratório
 
 1. Fazer backup do SQL Server, uploads e alterações locais.
-2. Parar a API e aplicar as migrações ausentes: 03, 04, 05 e 06. Em banco novo, começar pelo 01; o 02 é opcional.
+2. Parar a API e aplicar as migrações ausentes: 03, 04, 05, 06 e 07. Em banco novo, começar pelo 01; o 02 é opcional.
 3. Conferir `Back/bbs/application.properties` ou Environment do Spring Tools. O arquivo local é ignorado pelo Git; variáveis antigas têm prioridade.
 4. Iniciar API no Spring Tools e frontend no VS Code; seguir `docs/APRESENTACAO.md`.
 5. Abrir `/mobile` em aparelho físico na rede permitida e repetir o fluxo de apresentação.
 
-Pendentes: aceitação na rede/aparelho da escola, escolha e configuração de hospedagem, medição da meta de três segundos e capacidade sob carga. SSE usa uma instância de API, com recuperação periódica a cada dez segundos. O mobile é web, não APK. Pagamentos, frete e acompanhamento são acadêmicos; não há cobrança nem rastreio real de transportadora.
+Pendentes: configuração e entrega por provedor SMTP real, aceitação na rede/aparelho da escola, escolha e configuração de hospedagem, medição da meta de três segundos e capacidade sob carga. SSE usa uma instância de API, com recuperação periódica a cada dez segundos. O mobile é web, não APK. Pagamentos, frete e acompanhamento são acadêmicos; não há cobrança nem rastreio real de transportadora.
 
 Histórico: a execução `35406920922`, em 18/09/2026, aprovou a versão anterior com 14 testes frontend e 17 Java; ela não é a evidência das novas funcionalidades.
+
+Para os novos recursos, instalação do script 07 e configuração opcional de e-mail, consulte [Recuperação e relatórios](RECUPERACAO-E-RELATORIOS.md).

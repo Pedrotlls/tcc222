@@ -1,5 +1,7 @@
 # Escopo web e mobile — atualização de 28/09/2026
 
+**Atualização de 29/09/2026:** execute também `database/07_recuperacao_senha.sql` depois do 06, com a API parada. Novo visual, atalhos mobile, relatórios e recuperação por e-mail. [Responsabilidades, instalação e configuração SMTP](RECUPERACAO-E-RELATORIOS.md).
+
 A BBS é uma loja acadêmica de hardware. O cenário apresentado no TCC considera uma operação que depende de planilhas, anotações e atendimento pelas redes sociais; o sistema demonstra a centralização de catálogo, clientes, estoque e pedidos. O levantamento não constitui comprovação de uma empresa real operando esse processo.
 
 ## Entrega implementada
@@ -46,4 +48,4 @@ Pagamentos, promoções por modalidade, frete e entrega são demonstrativos. Int
 
 Pare a API; execute `05_tokens_autenticacao.sql` e `06_escopo_loja.sql` após as migrações anteriores. O 06 preserva os dados existentes e pode ser repetido. A aplicação valida o esquema ao iniciar.
 
-Tabelas: produto, bbs_usuario, bbs_compra, bbs_compra_item, bbs_compra_historico, bbs_favorito, bbs_endereco, bbs_sessao_token, bbs_cupom, bbs_avaliacao e bbs_carrinho_item.
+Tabelas: produto, bbs_usuario, bbs_compra, bbs_compra_item, bbs_compra_historico, bbs_favorito, bbs_endereco, bbs_sessao_token, bbs_cupom, bbs_avaliacao, bbs_carrinho_item e bbs_recuperacao_senha.

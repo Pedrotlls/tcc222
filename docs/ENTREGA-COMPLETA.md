@@ -1,5 +1,7 @@
 # Atualização completa BBS
 
+**Atualização de 29/09/2026:** execute também `database/07_recuperacao_senha.sql` depois do 06, com a API parada. Novo visual, atalhos mobile, relatórios e recuperação por e-mail. [Responsabilidades, instalação e configuração SMTP](RECUPERACAO-E-RELATORIOS.md).
+
 ## Instalar no projeto existente
 
 1. Pare a API no Spring Tools e o Vite no VS Code. Guarde cópia dos arquivos que editou no PC e backup do banco.

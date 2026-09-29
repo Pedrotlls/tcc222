@@ -1,5 +1,7 @@
 # Checklist da apresentação
 
+**Atualização de 29/09/2026:** execute também `database/07_recuperacao_senha.sql` depois do 06, com a API parada. Novo visual, atalhos mobile, relatórios e recuperação por e-mail. [Responsabilidades, instalação e configuração SMTP](RECUPERACAO-E-RELATORIOS.md).
+
 ## Antes
 
 - [ ] Instalar Node e JDK conforme README, testar downloads antes do dia.

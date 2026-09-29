@@ -1,10 +1,12 @@
 # SQL Server + Spring Tools + VS Code
 
+**Atualização de 29/09/2026:** execute também `database/07_recuperacao_senha.sql` depois do 06, com a API parada. Novo visual, atalhos mobile, relatórios e recuperação por e-mail. [Responsabilidades, instalação e configuração SMTP](../docs/RECUPERACAO-E-RELATORIOS.md).
+
 ## 1. Criar o banco no SSMS
 
 1. Abra o SQL Server Management Studio e conecte ao seu servidor.
 2. Abra **01_criar_banco.sql** e clique em Executar (F5).
-3. Execute **03_atualizar_funcionalidades.sql** depois **04_enderecos_clientes.sql** e **05_tokens_autenticacao.sql** e **06_escopo_loja.sql**. Confirme as onze tabelas no banco **apibbs**. Em instalação já funcionando, pare a API e execute 03, 04, 05 e 06.
+3. Execute **03_atualizar_funcionalidades.sql** depois **04_enderecos_clientes.sql** e **05_tokens_autenticacao.sql** e **06_escopo_loja.sql**. Confirme as doze tabelas no banco **apibbs**. Em instalação já funcionando, pare a API e execute 03, 04, 05 e 06.
 4. Opcionalmente, execute **02_produtos_exemplo.sql** para adicionar cinco produtos fictícios.
 
 O 01 cria tabelas ausentes. O 03 cria favoritos e histórico e acrescenta colunas opcionais de produto ausentes, preservando registros. Pode ser repetido.

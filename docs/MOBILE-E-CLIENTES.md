@@ -1,5 +1,7 @@
 # Tela mobile e cadastro de clientes
 
+**Atualização de 29/09/2026:** execute também `database/07_recuperacao_senha.sql` depois do 06, com a API parada. Novo visual, atalhos mobile, relatórios e recuperação por e-mail. [Responsabilidades, instalação e configuração SMTP](RECUPERACAO-E-RELATORIOS.md).
+
 ## Instalar a atualização
 
 Copie as pastas Front e Back do pacote para dentro de tcc222, mesclando e substituindo os arquivos. Não exclua as pastas originais. Faça backup se você editou esses arquivos localmente. O pacote inclui os visuais anteriores para manter todas as dependências consistentes.
