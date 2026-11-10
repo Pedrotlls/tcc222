@@ -12,6 +12,11 @@ export const categories = {
   teclado: {name:"Teclados",tag:"KEYBOARD · CONTROL",accent:"#b395ff"},
   mousepad: {name:"Mousepads",tag:"DESK · SETUP",accent:"#ff526c"},
   headset: {name:"Headsets",tag:"AUDIO · IMMERSION",accent:"#72b9ff"},
+  acessorios: {name:"Acessórios",tag:"SETUP · EXTRAS",accent:"#ffbd68"},
+  webcam: {name:"Webcams",tag:"VIDEO · STREAMING",accent:"#72b9ff"},
+  microfone: {name:"Microfones",tag:"AUDIO · VOICE",accent:"#4fd7ce"},
+  cadeira: {name:"Cadeiras",tag:"ERGONOMIA · CONFORTO",accent:"#b395ff"},
+  controle: {name:"Controles",tag:"GAMING · INPUT",accent:"#ff8b48"},
 };
 
 export function catalogView(products, search, category, order) {
