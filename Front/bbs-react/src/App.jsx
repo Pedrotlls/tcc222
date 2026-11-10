@@ -22,7 +22,7 @@ export default function App() {
   const [tema, setTema] = useState(() => { try { return localStorage.getItem("bbs-tema") === "light" ? "light" : "dark"; } catch { return "dark"; } });
   useEffect(() => {
     document.documentElement.dataset.theme = tema;
-    try { localStorage.setItem("bbs-tema", tema); } catch {}
+    try { localStorage.setItem("bbs-tema", tema); } catch { /* armazenamento indisponível */ }
   }, [tema]);
   function alternarTema() { setTema(t => t === "dark" ? "light" : "dark"); }
   const [retomarCompra,setRetomarCompra] = useState(false);
