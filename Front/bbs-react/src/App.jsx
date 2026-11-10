@@ -19,6 +19,12 @@ export default function App() {
   const {sincronizarUsuario}=useCart();
   const mobile = window.location.pathname.replace(/\/$/, "") === "/mobile";
   const [usuario, setUsuario] = useState(null);
+  const [tema, setTema] = useState(() => { try { return localStorage.getItem("bbs-tema") === "light" ? "light" : "dark"; } catch { return "dark"; } });
+  useEffect(() => {
+    document.documentElement.dataset.theme = tema;
+    try { localStorage.setItem("bbs-tema", tema); } catch {}
+  }, [tema]);
+  function alternarTema() { setTema(t => t === "dark" ? "light" : "dark"); }
   const [retomarCompra,setRetomarCompra] = useState(false);
   const [screen, setScreen] = useState(initialResetToken ? "recuperacao" : null);
   const [resetToken,setResetToken]=useState(initialResetToken);
@@ -47,9 +53,9 @@ export default function App() {
     else setScreen("checkout");
   }
   return <>
-    {!mobile && <Header abrirConta={() => setScreen("conta")} usuario={usuario} abrirFavoritos={()=>{setFavoritesOnly(true);document.getElementById("produtos")?.scrollIntoView();}} />}
+    {!mobile && <Header abrirConta={() => setScreen("conta")} usuario={usuario} tema={tema} alternarTema={alternarTema} abrirFavoritos={()=>{setFavoritesOnly(true);document.getElementById("produtos")?.scrollIntoView();}} />}
     {aviso && mobile && <div className="bbs-notice" role="status">{aviso}<button onClick={()=>setAviso("")}>Fechar aviso</button></div>}
-    {mobile ? <MobileHome usuario={usuario} abrirConta={abrirConta} versao={versao} favoritesOnly={favoritesOnly} onFavoritesOnly={setFavoritesOnly}/> : <>
+    {mobile ? <MobileHome usuario={usuario} abrirConta={abrirConta} versao={versao} favoritesOnly={favoritesOnly} onFavoritesOnly={setFavoritesOnly} tema={tema} alternarTema={alternarTema}/> : <>
     <main id="home" className="sf-store">
       <section className="sf-hero" aria-labelledby="sf-title">
         <div className="sf-hero-copy"><span className="sf-eyebrow"><i/> BITS BYTES STORE · HARDWARE & PERFORMANCE</span><h1 id="sf-title">Seu setup.<br/>Seu próximo <em>nível.</em></h1><p>Mais desempenho para jogar, criar e ir além.<br/>Encontre as peças para montar um setup com a sua cara.</p><div className="sf-hero-actions"><a className="sf-cta" href="#produtos">Explorar produtos <span>↗</span></a><a className="sf-secondary" href="#sobre">Conheça a BBS →</a></div><small>Projeto acadêmico · Sem vendas ou pagamentos reais</small></div>
