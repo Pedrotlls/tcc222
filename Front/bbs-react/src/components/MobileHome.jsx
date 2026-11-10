@@ -14,7 +14,7 @@ export default function MobileHome({usuario,abrirConta,versao,favoritesOnly,onFa
       <p className="mobile-demo">Loja acadêmica · Sem pagamentos ou entregas reais</p>
       <ProductList versao={versao} usuario={usuario} abrirConta={abrirConta} favoritesOnly={favoritesOnly} onFavoritesOnly={onFavoritesOnly}/>
       <section className="mobile-account-card"><h2>Seu pedido está aqui.</h2><p>Entre na sua conta para acompanhar os pedidos e atualizar seu perfil.</p><button onClick={abrirConta}>Abrir minha conta →</button></section>
-      <a className="mobile-desktop-link" href="/">Abrir versão desktop ↗</a>
+      <a className="mobile-desktop-link" href="/">← Voltar para versão computador</a>
     </main>
     <nav className="mobile-bottom-nav" aria-label="Navegação mobile">
       <a href="#home"><span aria-hidden="true">⌂</span>Início</a>
