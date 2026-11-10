@@ -43,7 +43,7 @@ export default function Checkout({ fechar, onComplete }) {
   const cupomValido=cupom?.cartKey===cartKey?cupom:null;
   const totais=cupomValido?{...baseTotais,desconto:Number(cupomValido.desconto),total:Math.round((subtotal+baseTotais.frete-Number(cupomValido.desconto))*100)/100}:baseTotais;
   // Conteúdo propositalmente inválido como cobrança: é apenas uma identificação textual da demonstração.
-  const pixDemoPayload = `BBS-DEMO-PIX|PEDIDO=${chave}|VALOR=${totais.total.toFixed(2)}|NAO-PAGAVEL`;
+  const pixDemoPayload = "BBS-DEMO-PIX|CONTEUDO-FICTICIO|NAO-PAGAVEL";
   const pixQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(pixDemoPayload)}`;
   async function copiarPixDemo() {
     try {
