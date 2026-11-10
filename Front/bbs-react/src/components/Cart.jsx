@@ -6,7 +6,7 @@
 
 import { useCart } from "../context/CartContext";
 
-export default function Cart({ abrirCheckout }) {
+export default function Cart({ abrirCheckout, mobile = false }) {
   // Cart.jsx: Sidebar do carrinho (version principal)
   // - Mostra itens do carrinho (via CartContext)
   // - Mostra o subtotal; o frete é cotado no checkout
@@ -40,7 +40,7 @@ export default function Cart({ abrirCheckout }) {
           cart-sidebar → classe CSS do index.css que controla a
           animação de slide (translateX). A classe "open" ativa a
           transição de fora para dentro da tela. */}
-      <aside id="cart-sidebar" className={isOpen ? "open" : ""}>
+      <aside id="cart-sidebar" className={`${isOpen ? "open" : ""}${mobile ? " cart-sidebar-mobile" : ""}`} aria-label="Meu carrinho">
 
         {/* Cabeçalho da sidebar com título e botão fechar (×) */}
         <div className="cart-header">
