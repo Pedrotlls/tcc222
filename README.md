@@ -50,7 +50,7 @@ A pasta Front/SLA e Front/bbs-react/legacy são versões anteriores, não execut
 - Favoritos persistidos na conta entre desktop e celular; comparação de até três produtos.
 - Alerta e filtro de estoque baixo com limite ajustável.
 - Histórico de mudanças de status com data e origem, para cliente e admin.
-- Loja, admin e checkout com estilos próprios; tela mobile funcional em **/mobile**.
+- Loja, admin e checkout com estilos próprios; tela mobile funcional em **/mobile**, com retorno à versão computador e alternância entre tema claro/escuro salva no navegador.
 
 Atualização de instalação existente e demonstração no celular: [ENTREGA-COMPLETA.md](docs/ENTREGA-COMPLETA.md).
 
