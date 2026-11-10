@@ -457,3 +457,98 @@
   .account-client-modal .bbs-form { padding:18px; }
   .account-client-modal > .bbs-error { margin:12px 16px; }
 }
+
+
+/* Correções finais de viewport: o drawer mobile ocupa a viewport real,
+   sem depender da largura do conteúdo ou do container da loja. */
+@media (max-width:700px) {
+  html, body, #root { max-width:100%; overflow-x:clip; }
+  #cart-sidebar.cart-sidebar-mobile {
+    position:fixed!important;
+    top:0!important; right:0!important; bottom:0!important; left:0!important;
+    width:auto!important; min-width:0!important; max-width:none!important;
+    height:100vh!important; height:100dvh!important;
+    margin:0!important; box-sizing:border-box!important;
+    transform:translate3d(100%,0,0)!important;
+    z-index:4001!important;
+    display:flex!important; flex-direction:column!important;
+    overflow:hidden!important;
+  }
+  #cart-sidebar.cart-sidebar-mobile.open {
+    transform:translate3d(0,0,0)!important;
+  }
+  #cart-sidebar.cart-sidebar-mobile .cart-items-list {
+    flex:1 1 auto!important; min-height:0!important;
+    overflow-y:auto!important; overscroll-behavior:contain;
+  }
+  #cart-sidebar.cart-sidebar-mobile .cart-footer { flex:0 0 auto!important; }
+  :root[data-theme="light"] #cart-sidebar.cart-sidebar-mobile {
+    background:#fff!important; color:#263047!important;
+    border:0!important;
+  }
+  :root[data-theme="light"] #cart-sidebar.cart-sidebar-mobile .cart-header {
+    background:#fff!important; color:#263047!important;
+    border-bottom:1px solid #e5e8ef!important;
+  }
+  :root[data-theme="light"] #cart-sidebar.cart-sidebar-mobile .cart-header h2,
+  :root[data-theme="light"] #cart-sidebar.cart-sidebar-mobile .cart-header button {
+    color:#263047!important;
+  }
+  :root[data-theme="light"] #cart-sidebar.cart-sidebar-mobile .cart-items-list {
+    background:#fff!important;
+  }
+  :root[data-theme="light"] #cart-sidebar.cart-sidebar-mobile .cart-item {
+    background:#f7f8fb!important; color:#263047!important;
+    border:1px solid #e2e6ee!important;
+  }
+  :root[data-theme="light"] #cart-sidebar.cart-sidebar-mobile .cart-item p:first-child {
+    color:#263047!important;
+  }
+  :root[data-theme="light"] #cart-sidebar.cart-sidebar-mobile .cart-footer {
+    background:#fff!important; color:#263047!important;
+    border-top:1px solid #e2e6ee!important;
+  }
+}
+/* Contraste explícito dos títulos dos produtos nos dois temas. */
+:root[data-theme="light"] .sf-store .bbs-product h3 {
+  color:#172238!important; opacity:1!important; text-shadow:none!important;
+}
+:root[data-theme="light"] .sf-store .bbs-product-category { color:#8d2947!important; }
+:root[data-theme="light"] .sf-store .bbs-product strong { color:#172238!important; }
+:root[data-theme="light"] .sf-store .sf-section-heading h2 {
+  background:none!important; color:#263047!important;
+}
+/* Minha conta: hierarquia visual mais limpa e consistente. */
+.account-client-modal .account-client-nav > button {
+  transition:background .18s,border-color .18s,color .18s;
+  font-weight:600;
+}
+.account-client-content .adm-page-heading {
+  padding-bottom:16px; border-bottom:1px solid #ffffff14;
+}
+.account-client-content .adm-page-heading small {
+  color:#ff8197; font-weight:700; letter-spacing:.13em;
+}
+.account-client-content .adm-page-heading h2 { margin:7px 0 0; }
+.account-client-content .bbs-order {
+  box-shadow:0 8px 24px #00000012;
+}
+.account-client-content .bbs-order > p { line-height:1.65; }
+:root[data-theme="light"] .account-client-content .adm-page-heading {
+  border-color:#e1e5ed;
+}
+:root[data-theme="light"] .account-client-content .adm-page-heading small {
+  color:#b52d4e;
+}
+:root[data-theme="light"] .account-client-content .adm-page-heading button {
+  background:#fff!important; color:#46516a!important; border-color:#dce1e9!important;
+}
+@media(max-width:700px) {
+  .account-client-modal.account-client-modal-mobile {
+    width:100%!important; max-width:100%!important;
+    inset:0!important; border-radius:0!important;
+  }
+  .account-client-nav { gap:6px!important; }
+  .account-client-nav > button { flex:0 0 auto!important; }
+  .account-client-content .adm-page-heading { gap:12px; }
+}
