@@ -3,7 +3,8 @@
 .mobile-header > a { color:#ff5879; font-size:1.65rem; font-weight:800; text-decoration:none; letter-spacing:2px; }
 .mobile-header > a span { color:#ff914f; }
 .mobile-header > span { font-size:.5rem; letter-spacing:1.2px; color:#a8a1b1; margin-right:auto; }
-.mobile-header button { background:#ff526c15; border:1px solid #ff526c40; color:#ffb7c6; border-radius:30px; min-width:38px; min-height:38px; font:600 .7rem 'Poppins',sans-serif; padding:8px 12px; cursor:pointer; }
+.mobile-header-actions { display:flex; align-items:center; gap:8px; }
+.mobile-header-actions button { background:#ff526c15; border:1px solid #ff526c40; color:#ffb7c6; border-radius:30px; min-width:38px; min-height:38px; font:600 .7rem 'Poppins',sans-serif; padding:8px 12px; cursor:pointer; }
 .mobile-screen { padding-bottom:105px; }
 .mobile-welcome { margin:18px; padding:22px; background:radial-gradient(ellipse at right,#ff526c24,transparent 75%),#19131b; border:1px solid #ff526c24; border-radius:20px; overflow:hidden; position:relative; }
 .mobile-welcome small { color:#ff859b; font-size:.6rem; letter-spacing:1.5px; }
@@ -41,3 +42,17 @@
 .mobile-desktop-link { display:block; text-align:center; color:#b0a1be; font-size:.7rem; text-decoration:none; }
 .adm-client-create { margin-top:20px; }
 @media(max-width:340px) { .mobile-screen .bbs-product-grid { grid-template-columns:1fr; }.mobile-hero-art { opacity:.4; }.mobile-welcome p { max-width:100%; } }
+
+.mobile-header-actions .mobile-theme-toggle { min-width:38px; width:38px; padding:8px; font-size:1rem; }
+.mobile-desktop-link { margin:18px 18px 24px; padding:14px; border:1px solid #ff526c55; border-radius:10px; background:#ff526c12; color:#ff9bad; font-weight:600; }
+:root[data-theme="light"] .mobile-shell { background:#f4f5f8; box-shadow:0 0 60px #17233812; }
+:root[data-theme="light"] .mobile-header { background:#fff; border-color:#e2e5eb; }
+:root[data-theme="light"] .mobile-header > span { color:#6d7180; }
+:root[data-theme="light"] .mobile-welcome { background:radial-gradient(ellipse at right,#ffb5c433,transparent 75%),linear-gradient(125deg,#fff0f3,#f3efff); border-color:#f0d9e0; }
+:root[data-theme="light"] .mobile-welcome p { color:#666575; }
+:root[data-theme="light"] .mobile-demo { color:#737383; }
+:root[data-theme="light"] .mobile-account-card { background:#fff; border-color:#e1e4eb; color:#24283a; }
+:root[data-theme="light"] .mobile-account-card p { color:#626a7b; }
+:root[data-theme="light"] .mobile-bottom-nav { background:#ffffffed; border-color:#e1e4eb; box-shadow:0 -8px 30px #17233812; }
+:root[data-theme="light"] .mobile-bottom-nav a, :root[data-theme="light"] .mobile-bottom-nav button { color:#53596a; }
+:root[data-theme="light"] .mobile-desktop-link { background:#fff; color:#c52e50; border-color:#f0c8d2; }
