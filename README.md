@@ -39,7 +39,7 @@ A pasta Front/SLA e Front/bbs-react/legacy são versões anteriores, não execut
 - Produtos com histórico devem ser desativados; a exclusão é bloqueada.
 - Checkout integrado: pedidos e itens persistidos, histórico individual e painel administrativo.
 - Preços, usuário, desconto, frete e total calculados no servidor.
-- PIX simulado: 10% de desconto; boleto: 7%; crédito/débito: sem desconto.
+- PIX demonstrativo: QR Code e código copia e cola com conteúdo fictício e explicitamente não pagável; 10% de desconto. Boleto simulado: 7%; crédito/débito: sem desconto.
 - Cotação acadêmica de frete por UF/região, quantidade de itens, valor do carrinho e modalidade.
 - Frete normal grátis a partir de R$ 3.500; entrega expressa custa mais e reduz o prazo estimado.
 - Confirmação idempotente, transações e bloqueios para controlar estoque.
