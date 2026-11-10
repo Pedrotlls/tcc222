@@ -106,3 +106,81 @@
   .ck-progress li:not(:last-child)::after { margin-inline: 5px; }
   .bbs-checkout .ck-success { margin-inline: 5%; }
 }
+
+
+/* Tema claro do checkout: esta tela tem CSS próprio e por isso não herdava
+   as cores claras definidas para a vitrine. */
+:root[data-theme="light"] .bbs-dialog.bbs-checkout {
+  color:#263047!important;
+  background:#f4f6fa!important;
+  background-image:radial-gradient(circle at 10% 30%,rgba(255,65,108,.06),transparent 40%),linear-gradient(145deg,#fff,#f3f5f9)!important;
+}
+:root[data-theme="light"] .bbs-checkout .bbs-dialog-heading {
+  background:#fff!important;
+  border-bottom:1px solid #e2e6ee!important;
+}
+:root[data-theme="light"] .bbs-checkout .bbs-dialog-heading button { color:#46516a!important; }
+:root[data-theme="light"] .bbs-checkout .ck-demo { color:#667187!important; }
+:root[data-theme="light"] .bbs-checkout .ck-card {
+  background:#fff!important;
+  border:1px solid #e1e5ed!important;
+  box-shadow:0 8px 28px #1723380a;
+  color:#263047!important;
+}
+:root[data-theme="light"] .bbs-checkout .ck-title {
+  color:#59647a!important;
+  border-color:#e6e9ef!important;
+}
+:root[data-theme="light"] .bbs-checkout .ck-item { border-color:#e6e9ef!important; }
+:root[data-theme="light"] .bbs-checkout .ck-item h3,
+:root[data-theme="light"] .bbs-checkout .ck-summary .ck-total { color:#263047!important; }
+:root[data-theme="light"] .bbs-checkout .ck-item p,
+:root[data-theme="light"] .bbs-checkout .ck-summary-item,
+:root[data-theme="light"] .bbs-checkout .ck-summary dl > div,
+:root[data-theme="light"] .bbs-checkout .ck-muted { color:#667187!important; }
+:root[data-theme="light"] .bbs-checkout .ck-address label,
+:root[data-theme="light"] .bbs-checkout .ck-pix-demo label { color:#59647a!important; }
+:root[data-theme="light"] .bbs-checkout .ck-address input,
+:root[data-theme="light"] .bbs-checkout .checkout-coupon input,
+:root[data-theme="light"] .bbs-checkout .ck-pix-demo textarea {
+  background:#f8f9fc!important;
+  border:1px solid #dce2eb!important;
+  color:#263047!important;
+  color-scheme:light;
+}
+:root[data-theme="light"] .bbs-checkout .ck-choice {
+  background:#fff!important;
+  border-color:#e1e5ed!important;
+}
+:root[data-theme="light"] .bbs-checkout .ck-choice b { color:#263047!important; }
+:root[data-theme="light"] .bbs-checkout .ck-choice small { color:#667187!important; }
+:root[data-theme="light"] .bbs-checkout .ck-choice.selected {
+  background:#fff3f5!important;
+  border-color:#f2a5b7!important;
+}
+:root[data-theme="light"] .bbs-checkout .ck-payment-panel {
+  border-color:#e6e9ef!important;
+}
+:root[data-theme="light"] .bbs-checkout .ck-payment-panel p { color:#667187!important; }
+:root[data-theme="light"] .bbs-checkout .ck-summary .ck-total {
+  border-color:#e1e5ed!important;
+}
+:root[data-theme="light"] .bbs-checkout button.ck-prev {
+  color:#46516a!important;
+  border-color:#dce2eb!important;
+  background:#fff!important;
+}
+:root[data-theme="light"] .bbs-checkout .ck-progress li { color:#667187!important; }
+:root[data-theme="light"] .bbs-checkout .ck-progress li.active { color:#263047!important; }
+:root[data-theme="light"] .bbs-checkout .ck-progress li:not(:last-child)::after {
+  background:#dce2eb!important;
+}
+:root[data-theme="light"] .bbs-checkout .ck-progress li > span { border-color:#dce2eb!important; }
+:root[data-theme="light"] .bbs-checkout .ck-progress li.active > span {
+  color:#fff!important; border-color:#ff416c!important;
+}
+:root[data-theme="light"] .bbs-checkout .ck-order-code { background:#f7f8fb!important; }
+:root[data-theme="light"] .bbs-checkout .ck-summary .ck-saving {
+  background:#effaf5!important; border-color:#ccebdc!important; color:#087b50!important;
+}
+:root[data-theme="light"] .bbs-checkout .ck-summary .ck-discount { color:#087b50!important; }
