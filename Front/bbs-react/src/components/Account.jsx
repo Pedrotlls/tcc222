@@ -10,7 +10,7 @@ import OrderHistory from "./OrderHistory";
 import "./features.css";
 const money = value => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const steps = { RECEBIDO: ["SEPARANDO", "CANCELADO"], SEPARANDO: ["ENVIADO", "CANCELADO"], ENVIADO: ["ENTREGUE"], ENTREGUE: [], CANCELADO: [] };
-export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onChange, abrirRecuperacao, initialTab = "pedidos" }) {
+export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onChange, abrirRecuperacao, initialTab = "pedidos", mobile = false }) {
   const [cadastro, setCadastro] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -80,7 +80,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
     } catch(err) {setClienteErro(err.message);}
     finally {clienteLock.current=false;setClienteSalvando(false);}
   }
-  return <Modal className={admin ? "adm-dashboard" : ""} title={usuario ? (admin ? "Administração BBS" : "Minha conta") : (cadastro ? "Criar conta" : "Entrar na BBS")} fechar={fechar}>
+  return <Modal className={admin ? "adm-dashboard" : `account-client-modal${mobile ? " account-client-modal-mobile" : ""}`} title={usuario ? (admin ? "Administração BBS" : "Minha conta") : (cadastro ? "Criar conta" : "Entrar na BBS")} fechar={fechar}>
     {error && <p className="bbs-error" role="alert">{error}</p>}
     {!usuario ? <form className="bbs-form" onSubmit={entrar}>
       {cadastro && <label>Nome<input name="nome" required minLength={2} maxLength={100} autoComplete="name" /></label>}
@@ -92,8 +92,8 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
       {!cadastro && <button type="button" className="forgot-link" onClick={abrirRecuperacao}>Esqueci minha senha</button>}
       <p>Projeto acadêmico. Use dados fictícios para a apresentação.</p>
     </form> : <>
-      <div className={admin ? "adm-layout" : "account-layout"}>
-      <div className={admin ? "adm-sidebar" : "bbs-actions"}>
+      <div className={admin ? "adm-layout" : "account-layout account-client-layout"}>
+      <div className={admin ? "adm-sidebar" : "bbs-actions account-client-nav"}>
         {admin && <div className="adm-brand">BBS<span>PAINEL DE CONTROLE</span></div>}
         <div className="adm-user"><b>{usuario.nome}</b><small>{usuario.email}</small></div>
         <button aria-pressed={tab==="pedidos"} onClick={() => setTab("pedidos")}>{admin ? "Visão geral e pedidos" : "Meus pedidos"}</button>
@@ -106,7 +106,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
         {admin && <button onClick={fechar}>← Voltar à loja</button>}
         <button disabled={busy} onClick={sair}>Sair</button>
       </div>
-      <div className={admin ? "adm-content" : "account-content"}>
+      <div className={admin ? "adm-content" : "account-content account-client-content"}>
       <div className="adm-page-heading"><div><small>{admin ? "ADMINISTRAÇÃO / " : "MINHA CONTA / "}{tab.toUpperCase()}</small><h2>{tab==="relatorios"?"Relatórios de vendas":tab==="cupons"?"Cupons de desconto":tab==="sessoes"?"Acessos e segurança":tab==="enderecos"?"Meus endereços":tab==="perfil"?"Seu perfil":tab==="clientes"?"Clientes e usuários":admin?"Visão geral":"Meus pedidos"}</h2></div><button disabled={busy || loading} onClick={() => {setLoading(true);setRevision(v => v+1);}}>↻ Atualizar</button></div>
       {tab === "relatorios" && admin ? <Reports key={revision}/> : tab === "cupons" && admin ? <Coupons/> : tab === "sessoes" ? <Sessions key={revision} onLogout={() => {onUsuario(null);fechar();}}/> : tab === "enderecos" ? <Addresses/> : tab === "perfil" ? <form className="bbs-form" onSubmit={perfil}>
         <label>Nome<input name="nome" defaultValue={usuario.nome} required minLength={2} maxLength={100}/></label>
