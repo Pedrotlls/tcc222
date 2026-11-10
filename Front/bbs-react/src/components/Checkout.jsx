@@ -34,6 +34,7 @@ export default function Checkout({ fechar, onComplete }) {
   const [cotacao, setCotacao] = useState(null);
   const [busy, setBusy] = useState(false);
   const [pedido, setPedido] = useState(null);
+  const [pixCopiado, setPixCopiado] = useState(false);
   const [chave] = useState(() => criarChavePedido());
   const lock = useRef(false);
   const baseTotais = calcularTotais(subtotal, cotacao?.valor, pagamento);
@@ -41,6 +42,17 @@ export default function Checkout({ fechar, onComplete }) {
   const cartKey=JSON.stringify(itens)+subtotal;
   const cupomValido=cupom?.cartKey===cartKey?cupom:null;
   const totais=cupomValido?{...baseTotais,desconto:Number(cupomValido.desconto),total:Math.round((subtotal+baseTotais.frete-Number(cupomValido.desconto))*100)/100}:baseTotais;
+  // Conteúdo propositalmente inválido como cobrança: é apenas uma identificação textual da demonstração.
+  const pixDemoPayload = `BBS-DEMO-PIX|PEDIDO=${chave}|VALOR=${totais.total.toFixed(2)}|NAO-PAGAVEL`;
+  const pixQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(pixDemoPayload)}`;
+  async function copiarPixDemo() {
+    try {
+      await navigator.clipboard.writeText(pixDemoPayload);
+      setPixCopiado(true);
+    } catch {
+      setError("Não foi possível copiar automaticamente. Selecione e copie o código PIX demonstrativo.");
+    }
+  }
   async function aplicarCupom(){
     setBusy(true);setError("");setCupom(null);
     try{const data=await request("/cupons/cotar",{method:"POST",body:{codigo:codigoCupom,itens}});setCupom({...data,cartKey});}
@@ -130,7 +142,7 @@ export default function Checkout({ fechar, onComplete }) {
           <section className="ck-card"><h2 className="ck-title">Forma de pagamento</h2>
             <div className="ck-payment-options">{[["pix","◇","PIX","10% de desconto"],["credito","▣","Crédito","Sem desconto"],["debito","▣","Débito","Sem desconto"],["boleto","▥","Boleto","7% de desconto"]].map(([id,icon,title,sub]) => <label key={id} className={"ck-choice "+(pagamento===id?"selected":"")}><input disabled={busy} type="radio" name="pagamento" checked={pagamento===id} onChange={() => setPagamento(id)}/><span className="ck-pay-icon" aria-hidden="true">{icon}</span><span><b>{title}</b><small>{sub}</small></span></label>)}</div>
             <div className="ck-payment-panel">
-              {pagamento==="pix" ? <><div className="ck-payment-symbol">◇</div><h3>Pagamento via PIX</h3><p>10% de desconto aplicado ao subtotal.</p><span className="ck-simulation">SIMULAÇÃO · SEM QR CODE PAGÁVEL</span></> :
+              {pagamento==="pix" ? <><h3>PIX demonstrativo</h3><p>10% de desconto aplicado ao subtotal.</p><div className="ck-pix-demo"><img src={pixQrUrl} alt="QR Code demonstrativo. Não representa uma cobrança PIX."/><strong>QR CODE FICTÍCIO</strong><p>Este código contém apenas texto de demonstração e não pode ser usado para pagar.</p><label htmlFor="ck-pix-copy">PIX copia e cola (fictício)</label><textarea id="ck-pix-copy" readOnly value={pixDemoPayload} onFocus={e=>e.target.select()} /><button type="button" className="ck-pix-copy" onClick={copiarPixDemo}>{pixCopiado?"Código copiado!":"Copiar código demonstrativo"}</button></div><span className="ck-simulation">SIMULAÇÃO · NÃO É UMA COBRANÇA PIX</span></> :
               pagamento==="boleto" ? <><div className="ck-barcode" aria-hidden="true"/><h3>Boleto bancário</h3><p>7% de desconto aplicado ao subtotal.</p><span className="ck-simulation">SIMULAÇÃO · NÃO É UM BOLETO</span></> :
               <><div className="ck-bank-card"><b>BBS</b><span>DEMONSTRAÇÃO</span><strong>•••• &nbsp; •••• &nbsp; •••• &nbsp; 0000</strong><small>CARTÃO FICTÍCIO · {pagamento==="credito"?"CRÉDITO":"DÉBITO"}</small></div><p>Não é necessário informar número, validade ou código de segurança.</p></>}
               <p className="ck-muted">Ao confirmar, apenas o pedido e a modalidade escolhida serão registrados. Não há processamento de pagamento.</p>
