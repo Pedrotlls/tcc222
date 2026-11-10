@@ -41,7 +41,7 @@ export default function ProductList({ versao, usuario, abrirConta, favoritesOnly
   const comparisonSource=[...new Map([...favorites.items,...produtos].map(p=>[p.id,p])).values()];
   const comparison=compareIds.map(id=>comparisonSource.find(p=>p.id===id)).filter(Boolean);
   const {filtered,groups}=catalogView(source.filter(p=>(!marca || p.marca===marca) && (!maxPreco || Number(p.preco)<=Number(maxPreco))),busca,categoria,ordem);
-  const available=[...new Set(source.map(p=>p.tipo || "outros"))];
+  const available=[...new Set([...Object.keys(categories),...source.map(p=>p.tipo || "outros")])];
   function comprar(p) { addToCart(p.id,p.nome,Number(p.preco),p.imgUrl || "",p.estoque);setSelected(null); }
   function indisponivel(p) { return !p.ativo || p.estoque <= (cart[p.id]?.qty || 0); }
   return <section id="produtos" aria-label="Catálogo">
