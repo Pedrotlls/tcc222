@@ -4,10 +4,10 @@ import { useCart } from "../context/CartContext";
 import HardwareArt from "./HardwareArt";
 import "./mobile.css";
 
-export default function MobileHome({usuario,abrirConta,versao,favoritesOnly,onFavoritesOnly}) {
+export default function MobileHome({usuario,abrirConta,versao,favoritesOnly,onFavoritesOnly,tema,alternarTema}) {
   const {totalQty,setIsOpen} = useCart();
   return <div className="mobile-shell">
-    <header className="mobile-header"><a href="/mobile" aria-label="BBS mobile início">BBS<span>.</span></a><span>SEU SETUP NA MÃO</span><button onClick={abrirConta} aria-label="Abrir minha conta">{usuario?usuario.nome.slice(0,1).toUpperCase():"Entrar"}</button></header>
+    <header className="mobile-header"><a href="/mobile" aria-label="BBS mobile início">BBS<span>.</span></a><span>SEU SETUP NA MÃO</span><div className="mobile-header-actions"><button className="mobile-theme-toggle" onClick={alternarTema} aria-label={tema === "dark" ? "Ativar tema claro" : "Ativar tema escuro"}>{tema === "dark" ? "☀" : "☾"}</button><button onClick={abrirConta} aria-label="Abrir minha conta">{usuario?usuario.nome.slice(0,1).toUpperCase():"Entrar"}</button></div></header>
     <main id="home" className="sf-store mobile-screen">
       <section className="mobile-welcome"><small>{usuario?`Olá, ${usuario.nome.split(" ")[0]}!`:"BEM-VINDO À BBS"}</small><h1>Qual é o seu<br/><em>próximo upgrade?</em></h1><p>Explore, escolha e monte seu setup.</p><div className="mobile-hero-art"><HardwareArt tipo="gpu"/></div><a href="#produtos">Explorar catálogo ↗</a></section>
       <MobileSummary usuario={usuario} versao={versao} abrirConta={abrirConta}/>
