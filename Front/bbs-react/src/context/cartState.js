@@ -7,7 +7,7 @@ export function cartReducer(cart, action) {
     const max = Math.max(0,Math.min(99,Number(action.stock ?? 99)));
     const qty = Math.min(max,(cart[id]?.qty || 0) + 1);
     if(qty < 1) return cart;
-    return {...cart,[id]:{name:action.name,price:action.price,img:action.img,qty,max}};
+    return {...cart,[id]:{name:action.name,price:action.price,img:action.img,qty,max,...(action.details||{})}};
   }
   if(action.type === "qty" && cart[id]) {
     const qty=Math.min(cart[id].max ?? 99,cart[id].qty + action.delta);
