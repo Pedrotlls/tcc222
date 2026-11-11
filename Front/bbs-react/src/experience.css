@@ -586,3 +586,11 @@
  #cart-sidebar.cart-sidebar-mobile .cart-qty-controls .cart-qty-btn {width:38px;min-width:38px;height:38px;min-height:38px;border-radius:11px;}
  #cart-sidebar.cart-sidebar-mobile .cart-qty-controls .cart-qty-remove {min-height:36px;}
 }
+
+/* Campo de CPF: máscara progressiva e confirmação visual dos dígitos verificadores. */
+.bbs-cpf-field {display:flex;flex-direction:column;gap:7px;}
+.bbs-cpf-field input[aria-invalid="true"] {border-color:#e34b60!important;box-shadow:0 0 0 2px #e34b6020;}
+.bbs-cpf-field small {font-size:.76rem;color:#9298a7;line-height:1.4;}
+.bbs-cpf-field small.cpf-valid {color:#0a9b68;font-weight:700;}
+.bbs-cpf-field small.cpf-invalid {color:#d63b52;font-weight:700;}
+:root[data-theme="light"] .bbs-cpf-field input {background:#fff;color:#20283a;border-color:#d6dce7;}
