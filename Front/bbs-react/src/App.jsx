@@ -69,7 +69,7 @@ export default function App() {
     </main>
     <footer className="sf-footer"><a href="#home" className="sf-footer-logo">BBS.</a><span>Bits Bytes Store · TCC 2026</span><small>Ambiente demonstrativo · Nenhum pagamento real</small><a href="#home">Voltar ao topo ↑</a></footer>
     </>}
-    <Cart abrirCheckout={checkout} mobile={mobile} />
+    <div className={mobile ? "mobile-overlay-host" : ""}><Cart abrirCheckout={checkout} mobile={mobile} /></div>
     {screen === "recuperacao" && <PasswordRecovery key={resetToken || "solicitar"} token={resetToken} onReset={()=>setUsuario(null)} fechar={()=>{setResetToken("");abrirConta();}}/>}
     {screen === "conta" && <Account mobile={mobile} initialTab={accountTab} abrirRecuperacao={()=>{setResetToken("");setScreen("recuperacao");}} usuario={usuario} onUsuario={u => {setUsuario(u);setAviso("");if(u && retomarCompra){setRetomarCompra(false);setScreen("checkout");}}} fechar={() => {setScreen(null);setRetomarCompra(false);}} abrirProdutos={() => setScreen("admin")} onChange={changed} />}
     {screen === "checkout" && usuario && <Checkout mobile={mobile} fechar={() => setScreen(null)} onComplete={changed}/>}
