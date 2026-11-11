@@ -554,3 +554,17 @@
 }
 
 
+
+/* Avisos da análise de compatibilidade do carrinho. */
+.cart-compatibility:empty { display:none!important; }
+.cart-compatibility:not(:empty) { margin:12px 18px;padding:13px 14px;border:1px solid #e4a23a55;border-radius:12px;background:#e4a23a10;color:inherit; }
+.cart-compatibility > strong { display:block;font-size:.8rem;margin-bottom:7px; }
+.cart-compatibility p { margin:6px 0;font-size:.74rem;line-height:1.5; }
+.cart-compatibility p.error { color:#e34b60; }
+.cart-compatibility p.warning { color:#b77a20; }
+.cart-compatibility small { display:block;margin-top:8px;color:#8b91a0;font-size:.65rem;line-height:1.45; }
+:root[data-theme="light"] .cart-compatibility:not(:empty) { background:#fff8e9;border-color:#f0d49c;color:#4c3b20; }
+:root[data-theme="light"] .cart-compatibility p.error { color:#b4233e; }
+:root[data-theme="light"] .cart-compatibility p.warning { color:#8a5b12; }
+.bbs-product-category { display:flex;align-items:center;gap:6px; }
+.bbs-product-category svg { width:20px;height:16px;flex:0 0 20px; }
