@@ -7,7 +7,7 @@ import { emptyAddress } from "../utils/address";
 import { request } from "../services/api";
 import { calcularTotais, criarChavePedido } from "../utils/checkout";
 const fmt = v => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-export default function Checkout({ fechar, onComplete }) {
+export default function Checkout({ fechar, onComplete, mobile = false }) {
   const { cart, cartOrder, subtotal, limparCarrinho } = useCart();
   const [error, setError] = useState("");
   const [step, setStep] = useState(1);
@@ -100,7 +100,7 @@ export default function Checkout({ fechar, onComplete }) {
     } catch(e) {setError(e.message);}
     finally {lock.current=false;setBusy(false);}
   }
-  return <Modal className="bbs-checkout" title="Checkout BBS" fechar={() => {if(!busy) fechar();}}>
+  return <Modal className={`bbs-checkout${mobile ? " bbs-checkout-mobile" : ""}`} title="Checkout BBS" fechar={() => {if(!busy) fechar();}}>
     <div className="ck-brand"><b>BBS</b><span>FINALIZAR COMPRA</span></div>
     <ol className="ck-progress" aria-label="Etapas da compra">
       {["Revisão","Entrega","Pagamento"].map((label,i) => <li key={label} className={step===i+1 ? "active" : step>i+1 ? "done" : ""} aria-current={step===i+1 ? "step" : undefined}><span>{step>i+1 ? "✓" : i+1}</span>{label}</li>)}
