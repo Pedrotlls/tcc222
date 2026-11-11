@@ -568,3 +568,21 @@
 :root[data-theme="light"] .cart-compatibility p.warning { color:#8a5b12; }
 .bbs-product-category { display:flex;align-items:center;gap:6px; }
 .bbs-product-category svg { width:20px;height:16px;flex:0 0 20px; }
+
+/* Controles de quantidade: compactos, alinhados e com ação de adicionar em destaque. */
+#cart-sidebar .cart-qty-controls {display:flex;align-items:center;gap:7px;flex-wrap:nowrap;margin-left:auto;}
+#cart-sidebar .cart-qty-controls > span {min-width:22px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;}
+#cart-sidebar .cart-qty-controls .cart-qty-btn {display:grid;place-items:center;width:34px;min-width:34px;height:34px;min-height:34px;padding:0;border:1px solid #ffffff24;border-radius:10px;background:#25212b;color:#f7f4fa;font-size:1.1rem;font-weight:700;line-height:1;cursor:pointer;transition:background .18s,border-color .18s,transform .18s;}
+#cart-sidebar .cart-qty-controls .cart-qty-add {background:linear-gradient(135deg,#ff416c,#ff7045);border-color:transparent;color:#fff;box-shadow:0 4px 12px #ff416c30;}
+#cart-sidebar .cart-qty-controls .cart-qty-btn:hover:not(:disabled) {transform:translateY(-1px);border-color:#ff6b87;background:#3a2934;}
+#cart-sidebar .cart-qty-controls .cart-qty-add:hover:not(:disabled) {background:linear-gradient(135deg,#ff5a7e,#ff8355);}
+#cart-sidebar .cart-qty-controls .cart-qty-btn:disabled {opacity:.4;cursor:not-allowed;box-shadow:none;}
+#cart-sidebar .cart-qty-controls .cart-qty-remove {min-width:58px;min-height:32px;padding:0 9px;border:1px solid #e45c7440;border-radius:9px;background:#e45c7412;color:#ff9bab;font-size:.68rem;font-weight:600;cursor:pointer;}
+:root[data-theme="light"] #cart-sidebar .cart-qty-controls .cart-qty-btn {background:#fff;border-color:#d9dfe9;color:#35415a;}
+:root[data-theme="light"] #cart-sidebar .cart-qty-controls .cart-qty-add {background:linear-gradient(135deg,#ff416c,#ff7045);border-color:transparent;color:#fff;}
+:root[data-theme="light"] #cart-sidebar .cart-qty-controls .cart-qty-remove {background:#fff1f3;border-color:#f1cbd3;color:#b52e4b;}
+@media(max-width:700px) {
+ #cart-sidebar.cart-sidebar-mobile .cart-qty-controls {gap:6px;}
+ #cart-sidebar.cart-sidebar-mobile .cart-qty-controls .cart-qty-btn {width:38px;min-width:38px;height:38px;min-height:38px;border-radius:11px;}
+ #cart-sidebar.cart-sidebar-mobile .cart-qty-controls .cart-qty-remove {min-height:36px;}
+}
