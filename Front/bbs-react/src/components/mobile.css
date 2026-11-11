@@ -80,7 +80,7 @@ body:has(.mobile-shell) .bbs-checkout-mobile .ck-item > strong { grid-column:2;w
 /* Host próprio: fixa o carrinho dentro da moldura do telefone, mesmo em desktop. */
 .mobile-overlay-host { display:contents; }
 body:has(.mobile-shell) .mobile-overlay-host {
-  display:block;position:fixed;top:0;bottom:0;left:50%;
+  display:block;position:fixed;top:0;bottom:0;left:50%;overflow:hidden;clip-path:inset(0);
   width:min(100vw,540px);height:100dvh;transform:translateX(-50%);
   z-index:3998;pointer-events:none;isolation:isolate;
 }
@@ -88,7 +88,7 @@ body:has(.mobile-shell) .mobile-overlay-host .mobile-cart-overlay {
   position:fixed!important;inset:0!important;width:100%!important;
   pointer-events:auto!important;
 }
-body:has(.mobile-shell) .mobile-overlay-host #cart-sidebar.cart-sidebar-mobile {
+body:has(.mobile-shell) .mobile-overlay-host #cart-sidebar.cart-sidebar-mobile:not(.open) {visibility:hidden!important;pointer-events:none!important;transform:translate3d(105%,0,0)!important;}\nbody:has(.mobile-shell) .mobile-overlay-host #cart-sidebar.cart-sidebar-mobile.open {visibility:visible!important;pointer-events:auto!important;transform:translate3d(0,0,0)!important;}\nbody:has(.mobile-shell) .mobile-overlay-host #cart-sidebar.cart-sidebar-mobile {
   position:fixed!important;inset:0!important;left:0!important;right:0!important;
   width:100%!important;max-width:100%!important;height:100%!important;
   transform:translate3d(105%,0,0)!important;pointer-events:auto!important;
