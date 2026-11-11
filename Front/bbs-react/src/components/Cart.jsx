@@ -22,6 +22,7 @@ export default function Cart({ abrirCheckout, mobile = false }) {
     setIsOpen, syncError, syncBusy, reload,
   } = useCart();
   const compatibilityWarnings=checkCompatibility(cartOrder.map(id=>cart[id]).filter(Boolean));
+  if (!isOpen) return null;
 
   return (
     <>
@@ -87,12 +88,12 @@ export default function Cart({ abrirCheckout, mobile = false }) {
                   </div>
 
                   {/* Controles de quantidade: -, contador, +, lixeira */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <button aria-label={"Diminuir " + item.name} onClick={() => changeQty(id, -1)}>-</button>
+                  <div className="cart-qty-controls">
+                    <button className="cart-qty-btn" aria-label={"Diminuir " + item.name} onClick={() => changeQty(id, -1)}>-</button>
                     <span>{item.qty}</span>
-                    <button aria-label={"Aumentar " + item.name} disabled={item.qty >= (item.max ?? 99)} onClick={() => changeQty(id, +1)}>+</button>
+                    <button className="cart-qty-btn cart-qty-add" aria-label={"Adicionar mais uma unidade de " + item.name} disabled={item.qty >= (item.max ?? 99)} onClick={() => changeQty(id, +1)}>+</button>
                     {/* Remove o item inteiro decrementando toda a quantidade */}
-                    <button aria-label={"Remover " + item.name} onClick={() => changeQty(id, -item.qty)}>🗑</button>
+                    <button className="cart-qty-remove" aria-label={"Remover " + item.name} onClick={() => changeQty(id, -item.qty)}>Remover</button>
                   </div>
                 </div>
               );
