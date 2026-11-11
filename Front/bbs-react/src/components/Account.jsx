@@ -7,6 +7,7 @@ import Sessions from "./Sessions";
 import Coupons from "./Coupons";
 import Reports from "./Reports";
 import OrderHistory from "./OrderHistory";
+import CpfField from "./CpfField";
 import "./features.css";
 const money = value => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const steps = { RECEBIDO: ["SEPARANDO", "CANCELADO"], SEPARANDO: ["ENVIADO", "CANCELADO"], ENVIADO: ["ENTREGUE"], ENTREGUE: [], CANCELADO: [] };
@@ -20,6 +21,10 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
   const [loading, setLoading] = useState(Boolean(usuario));
   const [revision, setRevision] = useState(0);
   const [novoCliente,setNovoCliente] = useState(false);
+  const [novoAdmin,setNovoAdmin] = useState(false);
+  const [adminErro,setAdminErro] = useState("");
+  const [adminSalvando,setAdminSalvando] = useState(false);
+  const [adminAviso,setAdminAviso] = useState("");
   const [clienteErro,setClienteErro] = useState("");
   const [clienteSalvando,setClienteSalvando] = useState(false);
   const [clienteAviso,setClienteAviso] = useState("");
@@ -71,6 +76,16 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
   const validos = pedidos.filter(p => p.status !== "CANCELADO");
   const pedidosVisiveis=pedidos.filter(p=>(!statusPedido || p.status===statusPedido) && `${p.id} ${p.clienteNome} ${p.clienteEmail}`.toLowerCase().includes(filtroPedido.trim().toLowerCase()));
   const clientesVisiveis=clientes.filter(c=>`${c.nome} ${c.email}`.toLowerCase().includes(buscaCliente.trim().toLowerCase()));
+  async function cadastrarAdmin(e) {
+    e.preventDefault();
+    if(clienteLock.current) return;
+    clienteLock.current=true;setAdminSalvando(true);setAdminErro("");
+    try {
+      const criado=await request("/admin/clientes/admins",{method:"POST",body:Object.fromEntries(new FormData(e.currentTarget))});
+      setClientes(old=>[...old,criado]);setNovoAdmin(false);setAdminAviso("Administrador cadastrado com sucesso. Ele já pode entrar com seu e-mail e senha.");
+    } catch(err) {setAdminErro(err.message);}
+    finally {clienteLock.current=false;setAdminSalvando(false);}
+  }
   async function cadastrarCliente(e) {
     e.preventDefault(); if(clienteLock.current) return;
     clienteLock.current=true;setClienteSalvando(true);setClienteErro("");
@@ -84,7 +99,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
     {error && <p className="bbs-error" role="alert">{error}</p>}
     {!usuario ? <form className="bbs-form" onSubmit={entrar}>
       {cadastro && <label>Nome<input name="nome" required minLength={2} maxLength={100} autoComplete="name" /></label>}
-      {cadastro && <label>CPF (opcional)<input name="cpf" inputMode="numeric" maxLength={14} placeholder="000.000.000-00"/></label>}
+      {cadastro && <CpfField label="CPF (opcional)" />}
       <label>E-mail<input name="email" type="email" required maxLength={150} autoComplete="username" /></label>
       <label>Senha<input name="senha" type="password" required minLength={cadastro ? 8 : 1} maxLength={64} autoComplete={cadastro ? "new-password" : "current-password"} /></label>
       <button className="bbs-primary" disabled={busy}>{busy ? "Aguarde…" : cadastro ? "Cadastrar e entrar" : "Entrar"}</button>
@@ -110,7 +125,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
       <div className="adm-page-heading"><div><small>{admin ? "ADMINISTRAÇÃO / " : "MINHA CONTA / "}{tab.toUpperCase()}</small><h2>{tab==="relatorios"?"Relatórios de vendas":tab==="cupons"?"Cupons de desconto":tab==="sessoes"?"Acessos e segurança":tab==="enderecos"?"Meus endereços":tab==="perfil"?"Seu perfil":tab==="clientes"?"Clientes e usuários":admin?"Visão geral":"Meus pedidos"}</h2></div><button disabled={busy || loading} onClick={() => {setLoading(true);setRevision(v => v+1);}}>↻ Atualizar</button></div>
       {tab === "relatorios" && admin ? <Reports key={revision}/> : tab === "cupons" && admin ? <Coupons/> : tab === "sessoes" ? <Sessions key={revision} onLogout={() => {onUsuario(null);fechar();}}/> : tab === "enderecos" ? <Addresses/> : tab === "perfil" ? <form className="bbs-form" onSubmit={perfil}>
         <label>Nome<input name="nome" defaultValue={usuario.nome} required minLength={2} maxLength={100}/></label>
-        <label>CPF (opcional — preencher para atualizar)<input name="cpf" inputMode="numeric" maxLength={14}/></label>
+        <CpfField label="CPF (opcional — preencher para atualizar)" />
         <p>Preencha as duas senhas apenas se quiser alterar sua senha.</p>
         <label>Senha atual<input type="password" name="senhaAtual" autoComplete="current-password" maxLength={64}/></label>
         <label>Nova senha<input type="password" name="novaSenha" autoComplete="new-password" minLength={8} maxLength={64}/></label>
@@ -132,16 +147,28 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
           <div className="bbs-actions">{(admin ? steps[p.status] || [] : p.status === "RECEBIDO" ? ["CANCELADO"] : []).map(s => <button disabled={busy} key={s} onClick={() => status(p,s)}>{s === "CANCELADO" ? "Cancelar pedido" : "Marcar " + s.toLowerCase()}</button>)}</div>
         </article>)}
       </>}
-      {admin && tab==="clientes" && <div className="adm-client-create"><button className="adm-primary" onClick={()=>{setClienteErro("");setNovoCliente(true);}}>+ Cadastrar cliente</button>{clienteAviso && <p className="adm-success" role="status">{clienteAviso}</p>}</div>}
+      {admin && tab==="clientes" && <div className="adm-client-create"><button className="adm-primary" onClick={()=>{setClienteErro("");setNovoCliente(true);}}>+ Cadastrar cliente</button><button className="adm-primary" onClick={()=>{setAdminErro("");setNovoAdmin(true);}}>+ Cadastrar administrador</button>{clienteAviso && <p className="adm-success" role="status">{clienteAviso}</p>}{adminAviso && <p className="adm-success" role="status">{adminAviso}</p>}</div>}
       </div></div>
     </>}
+    {admin && novoAdmin && <Modal className="adm-editor" title="Cadastrar administrador" fechar={()=>{if(!adminSalvando)setNovoAdmin(false);}}>
+      <p>Crie uma nova conta administrativa. Somente administradores autenticados podem acessar esta função.</p>
+      {adminErro && <p className="bbs-error" role="alert">{adminErro}</p>}
+      <form className="bbs-form" onSubmit={cadastrarAdmin}>
+        <label>Nome<input name="nome" minLength={2} maxLength={100} required autoComplete="off" disabled={adminSalvando}/></label>
+        <label>E-mail<input name="email" type="email" maxLength={150} required autoComplete="off" disabled={adminSalvando}/></label>
+        <CpfField label="CPF (opcional)" />
+        <label>Senha inicial<input name="senha" type="password" minLength={12} maxLength={64} required autoComplete="new-password" disabled={adminSalvando}/></label>
+        <p>Use uma senha forte com pelo menos 12 caracteres. A conta será criada diretamente com perfil ADMIN.</p>
+        <button className="adm-primary" disabled={adminSalvando}>{adminSalvando?"Cadastrando…":"Criar administrador"}</button>
+      </form>
+    </Modal>}
     {admin && novoCliente && <Modal className="adm-editor" title="Cadastrar cliente" fechar={()=>{if(!clienteSalvando)setNovoCliente(false);}}>
       <p>Crie uma conta de cliente. Sua sessão de administrador permanece aberta.</p>
       {clienteErro && <p className="bbs-error" role="alert">{clienteErro}</p>}
       <form className="bbs-form" onSubmit={cadastrarCliente}>
         <label>Nome<input name="nome" minLength={2} maxLength={100} required autoComplete="off" disabled={clienteSalvando}/></label>
         <label>E-mail<input name="email" type="email" maxLength={150} required autoComplete="off" disabled={clienteSalvando}/></label>
-        <label>CPF (opcional)<input name="cpf" inputMode="numeric" maxLength={14}/></label>
+        <CpfField label="CPF (opcional)" />
         <label>Senha inicial<input name="senha" type="password" minLength={8} maxLength={64} required autoComplete="new-password" disabled={clienteSalvando}/></label>
         <p>O cliente pode alterar a senha em Minha conta. Use dados fictícios na demonstração.</p>
         <button className="adm-primary" disabled={clienteSalvando}>{clienteSalvando?"Cadastrando…":"Cadastrar cliente"}</button>
