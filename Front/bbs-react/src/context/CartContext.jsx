@@ -15,6 +15,7 @@ export function CartProvider({ children }) {
   const [freteGlobal,setFreteGlobal]=useState(0);
   const [freteInfo,setFreteInfo]=useState("");
   const [isOpen,setIsOpen]=useState(false);
+  const [productSpecs,setProductSpecs]=useState({});
   useEffect(() => {
     cartRef.current=cart;
     // Apenas o carrinho de visitante é armazenado neste navegador.
@@ -71,15 +72,17 @@ export function CartProvider({ children }) {
       .finally(()=>{if(generation===epoch.current && pending.current===job)setSyncBusy(false);});
     pending.current=job;
   },[receive]);
-  const addToCart=useCallback((id,name,price,img,stock) => {
-    if(owner.current)change(id,1);else dispatch({type:"add",id,name,price,img,stock});setIsOpen(true);
+  const addToCart=useCallback((id,name,price,img,stock,details={}) => {
+    setProductSpecs(old=>({...old,[String(id)]:{...details,name,nome:name}}));
+    if(owner.current)change(id,1);else dispatch({type:"add",id,name,price,img,stock,details:{...details,nome:name}});setIsOpen(true);
   },[change]);
   const changeQty=useCallback((id,delta) => {if(owner.current)change(id,delta);else dispatch({type:"qty",id,delta});},[change]);
   const limparCarrinho=useCallback(() => {dispatch({type:"clear"});setFreteGlobal(0);setFreteInfo("");setIsOpen(false);try{localStorage.setItem("bbs_cart_draft","{}");}catch{/* Modo privado. */}if(owner.current)reload();},[reload]);
+  const cartWithSpecs=Object.fromEntries(Object.entries(cart).map(([id,item])=>[id,{...item,...(productSpecs[id]||{})}]));
   const cartOrder=Object.keys(cart);
   const totalQty=cartOrder.reduce((n,id) => n+cart[id].qty,0);
   const subtotal=cartOrder.reduce((n,id) => n+cart[id].qty*cart[id].price,0);
-  return <CartContext.Provider value={{cart,cartOrder,totalQty,subtotal,total:subtotal+freteGlobal,freteGlobal,setFreteGlobal,freteInfo,setFreteInfo,isOpen,setIsOpen,addToCart,changeQty,limparCarrinho,sincronizarUsuario,syncError,syncBusy,reload}}>{children}</CartContext.Provider>;
+  return <CartContext.Provider value={{cart:cartWithSpecs,cartOrder,totalQty,subtotal,total:subtotal+freteGlobal,freteGlobal,setFreteGlobal,freteInfo,setFreteInfo,isOpen,setIsOpen,addToCart,changeQty,limparCarrinho,sincronizarUsuario,syncError,syncBusy,reload}}>{children}</CartContext.Provider>;
 }
 // eslint-disable-next-line react-refresh/only-export-components
 export function useCart(){return useContext(CartContext);}
