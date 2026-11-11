@@ -70,7 +70,7 @@ export default function ProductList({ versao, usuario, abrirConta, favoritesOnly
       <div className="bbs-product-grid">{group.items.map(p => <article className="bbs-product" key={p.id}>
         <div className="feature-card-top"><span className={`sf-stock ${!p.ativo || p.estoque<=0?"unavailable":""}`}>{!p.ativo || p.estoque<=0?"Indisponível":p.estoque<=5?"Últimas unidades":"Disponível"}</span><button className="feature-heart" disabled={favorites.pending!==null || favorites.loading || Boolean(favorites.error)} aria-pressed={favorites.items.some(f=>f.id===p.id)} aria-label={`${favorites.items.some(f=>f.id===p.id)?"Remover dos":"Adicionar aos"} favoritos: ${p.nome}`} onClick={()=>favorites.toggle(p)}>{favorites.items.some(f=>f.id===p.id)?"♥":"♡"}</button></div>
         <button className="bbs-product-image" onClick={() => setSelected(p)} aria-label={"Ver detalhes de "+p.nome}><ProductImage key={p.imgUrl} p={p}/></button>
-        <span className="bbs-product-category">{cats[p.tipo]||p.tipo||"Hardware"}</span>
+        <span className="bbs-product-category"><HardwareArt tipo={p.tipo}/>{cats[p.tipo]||p.tipo||"Hardware"}</span>
         {p.marca && <small>{p.marca}</small>}<h3 title={p.nome}>{p.nome}</h3><p>{(p.descricao||"").slice(0,100)}</p><strong>{money(p.preco)}</strong>
         <span>{p.estoque>0 ? p.estoque+" em estoque" : "Indisponível"}</span>
         <button className="bbs-buy" disabled={indisponivel(p)} onClick={() => comprar(p)}>{indisponivel(p) ? "Limite de estoque" : "Adicionar ao carrinho"}</button>
