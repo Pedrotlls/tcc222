@@ -72,7 +72,7 @@ export default function App() {
     <Cart abrirCheckout={checkout} mobile={mobile} />
     {screen === "recuperacao" && <PasswordRecovery key={resetToken || "solicitar"} token={resetToken} onReset={()=>setUsuario(null)} fechar={()=>{setResetToken("");abrirConta();}}/>}
     {screen === "conta" && <Account mobile={mobile} initialTab={accountTab} abrirRecuperacao={()=>{setResetToken("");setScreen("recuperacao");}} usuario={usuario} onUsuario={u => {setUsuario(u);setAviso("");if(u && retomarCompra){setRetomarCompra(false);setScreen("checkout");}}} fechar={() => {setScreen(null);setRetomarCompra(false);}} abrirProdutos={() => setScreen("admin")} onChange={changed} />}
-    {screen === "checkout" && usuario && <Checkout fechar={() => setScreen(null)} onComplete={changed}/>}
+    {screen === "checkout" && usuario && <Checkout mobile={mobile} fechar={() => setScreen(null)} onComplete={changed}/>}
     {screen === "admin" && usuario?.perfil === "ADMIN" && <AdminPage fechar={() => {changed();setScreen("conta");}} onProdutoSalvo={changed} />}
   </>;
 }
