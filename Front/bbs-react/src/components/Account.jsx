@@ -80,7 +80,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
     } catch(err) {setClienteErro(err.message);}
     finally {clienteLock.current=false;setClienteSalvando(false);}
   }
-  return <Modal className={admin ? "adm-dashboard" : `account-client-modal${mobile ? " account-client-modal-mobile" : ""}`} title={usuario ? (admin ? "Administração BBS" : "Minha conta") : (cadastro ? "Criar conta" : "Entrar na BBS")} fechar={fechar}>
+  return <Modal className={`${admin ? "adm-dashboard" : "account-client-modal"}${mobile ? " bbs-mobile-dialog" : ""}`} title={usuario ? (admin ? "Administração BBS" : "Minha conta") : (cadastro ? "Criar conta" : "Entrar na BBS")} fechar={fechar}>
     {error && <p className="bbs-error" role="alert">{error}</p>}
     {!usuario ? <form className="bbs-form" onSubmit={entrar}>
       {cadastro && <label>Nome<input name="nome" required minLength={2} maxLength={100} autoComplete="name" /></label>}
