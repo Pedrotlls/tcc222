@@ -184,3 +184,12 @@
   background:#effaf5!important; border-color:#ccebdc!important; color:#087b50!important;
 }
 :root[data-theme="light"] .bbs-checkout .ck-summary .ck-discount { color:#087b50!important; }
+
+body:has(.mobile-shell) dialog.bbs-checkout-mobile {position:fixed!important;left:50%!important;right:auto!important;top:0!important;bottom:0!important;transform:translateX(-50%)!important;width:min(100vw,540px)!important;max-width:min(100vw,540px)!important;height:100dvh!important;max-height:100dvh!important;margin:0!important;border-radius:0!important;overflow-y:auto!important;padding-bottom:calc(20px + env(safe-area-inset-bottom))!important;}
+body:has(.mobile-shell) .bbs-checkout-mobile .ck-layout {grid-template-columns:minmax(0,1fr)!important;padding:0 14px!important;gap:14px!important;}
+body:has(.mobile-shell) .bbs-checkout-mobile .ck-summary {position:static!important;}
+body:has(.mobile-shell) .bbs-checkout-mobile .ck-card {padding:15px!important;}
+body:has(.mobile-shell) .bbs-checkout-mobile .ck-nav {flex-direction:column!important;}
+body:has(.mobile-shell) .bbs-checkout-mobile .ck-nav button {width:100%!important;}
+body:has(.mobile-shell) .bbs-checkout-mobile .ck-progress {padding:18px 14px!important;}
+body:has(.mobile-shell) .bbs-checkout-mobile .ck-demo {margin:0 14px 16px!important;}
