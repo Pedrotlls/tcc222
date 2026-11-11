@@ -96,3 +96,12 @@ body:has(.mobile-shell) .mobile-overlay-host #cart-sidebar.cart-sidebar-mobile {
 body:has(.mobile-shell) .mobile-overlay-host #cart-sidebar.cart-sidebar-mobile.open {
   transform:translate3d(0,0,0)!important;
 }
+
+/* Todos os diálogos da experiência /mobile: login, cadastro, detalhes,
+   favoritos/comparação, conta, recuperação, administração e checkout. */
+body:has(.mobile-shell) dialog.bbs-dialog {
+  position:fixed!important;top:0!important;bottom:0!important;left:50%!important;right:auto!important;
+  transform:translateX(-50%)!important;width:min(100vw,540px)!important;max-width:min(100vw,540px)!important;
+  height:100dvh!important;max-height:100dvh!important;margin:0!important;border-radius:0!important;
+  box-sizing:border-box!important;overflow-y:auto!important;
+}
