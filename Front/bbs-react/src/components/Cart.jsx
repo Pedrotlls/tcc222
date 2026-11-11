@@ -5,6 +5,7 @@
 // ============================================================
 
 import { useCart } from "../context/CartContext";
+import { checkCompatibility } from "../utils/compatibility";
 
 export default function Cart({ abrirCheckout, mobile = false }) {
   // Cart.jsx: Sidebar do carrinho (version principal)
@@ -20,6 +21,7 @@ export default function Cart({ abrirCheckout, mobile = false }) {
     isOpen,         // Sidebar visível (true) ou oculta (false)
     setIsOpen, syncError, syncBusy, reload,
   } = useCart();
+  const compatibilityWarnings=checkCompatibility(cartOrder.map(id=>cart[id]).filter(Boolean));
 
   return (
     <>
@@ -61,7 +63,7 @@ export default function Cart({ abrirCheckout, mobile = false }) {
             Scroll vertical independente para não travar o footer */}
         {syncError && <p className="bbs-error" role="alert">{syncError}<button onClick={reload}>Tentar sincronizar</button></p>}
         {syncBusy && <p role="status">Sincronizando carrinho…</p>}
-        <div className="cart-items-list" id="cart-items">
+        <section className="cart-compatibility" aria-label="Verificação de compatibilidade">{compatibilityWarnings.length>0 && <><strong>Verificação do setup</strong>{compatibilityWarnings.map((warning,i)=><p key={i} className={warning.level}>{warning.title}: {warning.detail}</p>)}<small>Resultado baseado nas especificações preenchidas no cadastro. Confirme sempre com o fabricante.</small></>}</section><div className="cart-items-list" id="cart-items">
           {cartOrder.length === 0 ? (
             // Mensagem quando o carrinho está vazio
             <p style={{ color: "#888", padding: "20px", textAlign: "center" }}>
