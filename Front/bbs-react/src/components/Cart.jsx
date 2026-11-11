@@ -27,6 +27,7 @@ export default function Cart({ abrirCheckout, mobile = false }) {
           Só renderizado quando isOpen é true. */}
       {isOpen && (
         <div
+          className={mobile ? "mobile-cart-overlay" : ""}
           onClick={() => setIsOpen(false)}
           style={{
             position: "fixed", inset: 0,
