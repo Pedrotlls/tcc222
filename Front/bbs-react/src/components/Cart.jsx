@@ -1,268 +1,86 @@
-// ============================================================
-//  Cart.jsx  —  Sidebar do carrinho de compras
-//  Painel lateral que desliza da direita com os itens do carrinho,
-//  cálculo de frete via API ViaCEP e botão de finalizar pedido.
-// ============================================================
-
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useCart } from "../context/CartContext";
-import { useState } from "react";
+import { checkCompatibility } from "../utils/compatibility";
+import "./cart-mobile.css";
 
-export default function Cart({ abrirCheckout }) {
-  // Cart.jsx: Sidebar do carrinho (version principal)
-  // - Mostra itens do carrinho (via CartContext)
-  // - Calcula frete usando ViaCEP (API externa)
-  // - Mostra subtotal/total (inclui freteGlobal)
-  // - Ao finalizar, chama abrirCheckout() para abrir o fluxo de compra.
-  // Dados e funções do contexto global do carrinho
+const money = value => Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+export default function Cart({ abrirCheckout, mobile = false }) {
   const {
-    cart,           // Objeto com todos os itens { [id]: { name, price, img, qty } }
-    cartOrder,      // Array de IDs na ordem de inserção
-    changeQty,      // Função para incrementar/decrementar quantidade
-    total,          // Total com frete incluído
-    freteGlobal,    // Valor do frete calculado
-    setFreteGlobal, // Atualiza o frete no contexto global
-    freteInfo,      // Texto descritivo do frete
-    setFreteInfo,
-    isOpen,         // Sidebar visível (true) ou oculta (false)
-    setIsOpen,
+    cart, cartOrder, changeQty, subtotal, isOpen, setIsOpen,
+    syncError, syncBusy, reload,
   } = useCart();
 
-  // CEP digitado pelo usuário no campo de frete
-  const [cep, setCep] = useState("");
+  useEffect(() => {
+    if (!mobile || !isOpen) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [mobile, isOpen]);
 
-  // true enquanto aguarda a resposta da API ViaCEP.
-  // Serve para trocar “OK”/“...” no botão de cálculo.
-  const [loadingFrete, setLoadingFrete] = useState(false);
+  if (!isOpen) return null;
 
+  const items = cartOrder.map(id => ({ id, item: cart[id] })).filter(row => row.item);
+  const warnings = checkCompatibility(items.map(row => row.item));
+  const finalizar = () => {
+    if (!items.length || syncBusy) return;
+    setIsOpen(false);
+    abrirCheckout();
+  };
 
-  // ── calcularFrete ─────────────────────────────────────────
-  // Consulta a API ViaCEP com o CEP digitado.
-  // Se válido, define frete fixo de R$ 15,90 e exibe a cidade/UF.
-  async function calcularFrete() {
-    /*
-     * Chamada de API externa (NÃO é o seu backend).
-     * URL:
-     *   GET https://viacep.com.br/ws/{cep}/json/
-     *
-     * O que faz:
-     * - valida o CEP (8 dígitos)
-     * - usa ViaCEP para obter cidade/UF
-     * - define um frete fixo no carrinho (R$ 15,90)
-     * - guarda um texto descritivo para exibir na UI
-     */
-    // Transformar o que o usuário digitou (ex: 01001-000)
-    // em apenas dígitos (01001000)
-    const cepLimpo = cep.replace(/\D/g, "");
+  const conteudo = <>
+    <div className={mobile ? "mobile-cart-backdrop" : "cart-backdrop"} onClick={() => setIsOpen(false)} aria-hidden="true" />
+    <aside id="cart-sidebar" className={`cart-drawer open ${mobile ? "cart-drawer-mobile" : ""}`} role="dialog" aria-modal="true" aria-label="Meu carrinho">
+      <header className="cart-header">
+        <div><span className="cart-kicker">BITS BYTES STORE</span><h2>Meu carrinho <small>({items.reduce((n, row) => n + row.item.qty, 0)} itens)</small></h2></div>
+        <button type="button" onClick={() => setIsOpen(false)} aria-label="Fechar carrinho">×</button>
+      </header>
 
-    // Validação simples: CEP BR sempre tem 8 dígitos
-    if (cepLimpo.length !== 8) {
-      alert("CEP inválido!");
-      return;
-    }
+      {syncError && <div className="cart-sync-error" role="alert"><span>{syncError}</span><button type="button" onClick={reload}>Tentar novamente</button></div>}
+      {syncBusy && <p className="cart-sync-status" role="status">Atualizando seu carrinho…</p>}
 
-    // Marca loading para trocar o texto do botão
-    setLoadingFrete(true);
+      <div className="cart-drawer-content">
+        {warnings.length > 0 && <section className="cart-compatibility" aria-label="Compatibilidade do setup">
+          <strong>Verificação do setup</strong>
+          {warnings.map((warning, i) => <p key={i} className={warning.level}>{warning.title}: {warning.detail}</p>)}
+          <small>Confira as especificações do fabricante antes da compra.</small>
+        </section>}
 
-    try {
-      /*
-       * Chamada de API externa:
-       *   GET https://viacep.com.br/ws/{cep}/json/
-       *
-       * O que é retornado (principalmente):
-       * - data.localidade (cidade)
-       * - data.uf (UF/estado)
-       * - se der erro: data.erro = true
-       */
-      const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
-      const data = await res.json();
+        {items.length === 0 ? <div className="cart-empty">
+          <span aria-hidden="true">🛒</span><h3>Seu carrinho está vazio</h3>
+          <p>Explore o catálogo e adicione os produtos que deseja.</p>
+          <button type="button" onClick={() => setIsOpen(false)}>Continuar comprando</button>
+        </div> : <div className="cart-items-list" id="cart-items">
+          {items.map(({ id, item }) => <article className="cart-item" key={id}>
+            {item.img ? <img src={item.img} alt="" onError={e => { e.currentTarget.style.visibility = "hidden"; }} /> : <span className="cart-item-placeholder">BBS</span>}
+            <div className="cart-item-info">
+              <strong>{item.name}</strong>
+              <span>{money(item.price)} / un.</span>
+              <b>{money(item.price * item.qty)}</b>
+            </div>
+            <div className="cart-qty-controls" aria-label={`Quantidade de ${item.name}`}>
+              <button type="button" className="cart-qty-btn" aria-label={`Diminuir ${item.name}`} disabled={syncBusy} onClick={() => changeQty(id, -1)}>−</button>
+              <output aria-live="polite">{item.qty}</output>
+              <button type="button" className="cart-qty-btn cart-qty-add" aria-label={`Adicionar ${item.name}`} disabled={syncBusy || item.qty >= (item.max ?? 99)} onClick={() => changeQty(id, 1)}>+</button>
+              <button type="button" className="cart-qty-remove" disabled={syncBusy} onClick={() => changeQty(id, -item.qty)}>Remover</button>
+            </div>
+          </article>)}
+        </div>}
+      </div>
 
-      // Se ViaCEP disser que não achou, não mexe no frete
-      if (data.erro) {
-        alert("CEP não encontrado!");
-        return;
-      }
+      <footer className="cart-drawer-footer">
+        <p>O frete e os descontos serão calculados na próxima etapa.</p>
+        <div className="cart-subtotal"><span>Subtotal</span><strong>{money(subtotal)}</strong></div>
+        <button type="button" className="cart-checkout-button" disabled={!items.length || syncBusy} onClick={finalizar}>
+          {syncBusy ? "Sincronizando…" : "Continuar para entrega"}
+        </button>
+        <small>Ambiente demonstrativo · Nenhum pagamento real</small>
+      </footer>
+    </aside>
+  </>;
 
-      // Regra do projeto: frete fixo (independente da cidade)
-      setFreteGlobal(15.90);
-
-      // Texto que aparece na UI
-      setFreteInfo(`🚚 Entrega para ${data.localidade} - ${data.uf}`);
-    } catch {
-      // Qualquer problema de rede/servidor vira erro amigável
-      alert("Erro ao calcular frete.");
-    } finally {
-      // Para o estado de loading do botão
-      setLoadingFrete(false);
-    }
-
-  }
-
-  return (
-    <>
-      {/* Overlay escuro atrás da sidebar: clicar aqui fecha o carrinho.
-          Só renderizado quando isOpen é true. */}
-      {isOpen && (
-        <div
-          onClick={() => setIsOpen(false)}
-          style={{
-            position: "fixed", inset: 0,
-            background: "rgba(0,0,0,0.6)", // fundo semitransparente escuro
-            zIndex: 3999,
-          }}
-        />
-      )}
-
-      {/* ── Sidebar ──────────────────────────────────────────
-          cart-sidebar → classe CSS do index.css que controla a
-          animação de slide (translateX). A classe "open" ativa a
-          transição de fora para dentro da tela. */}
-      <aside id="cart-sidebar" className={isOpen ? "open" : ""}>
-
-        {/* Cabeçalho da sidebar com título e botão fechar (×) */}
-        <div className="cart-header">
-          <h2>Meu Setup</h2>
-          <button
-            onClick={() => setIsOpen(false)}
-            style={{
-              background: "none", border: "none", color: "white",
-              fontSize: "2.5rem", cursor: "pointer", lineHeight: 1,
-            }}
-          >
-            &times;
-          </button>
-        </div>
-
-        {/* ── Lista de itens ──────────────────────────────────
-            Scroll vertical independente para não travar o footer */}
-        <div className="cart-items-list" id="cart-items">
-          {cartOrder.length === 0 ? (
-            // Mensagem quando o carrinho está vazio
-            <p style={{ color: "#888", padding: "20px", textAlign: "center" }}>
-              Carrinho vazio
-            </p>
-          ) : (
-            cartOrder.map(id => {
-              const item = cart[id];
-              if (!item) return null;
-              return (
-                <div key={id} className="cart-item">
-                  {/* Miniatura do produto */}
-                  <img src={item.img} alt={item.name} width={60} />
-
-                  {/* Nome e preço */}
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontWeight: "bold" }}>{item.name}</p>
-                    <p style={{ margin: 0, color: "#ff416c" }}>
-                      {item.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                    </p>
-                  </div>
-
-                  {/* Controles de quantidade: -, contador, +, lixeira */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <button onClick={() => changeQty(id, -1)}>-</button>
-                    <span>{item.qty}</span>
-                    <button onClick={() => changeQty(id, +1)}>+</button>
-                    {/* Remove o item inteiro decrementando toda a quantidade */}
-                    <button onClick={() => changeQty(id, -item.qty)}>🗑</button>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* ── Footer: frete + total + botão finalizar ─────────
-            Fundo escuro levemente translúcido, separado por borda superior */}
-        <div
-          className="cart-footer"
-          style={{
-            padding: "30px",
-            borderTop: "1px solid var(--glass-border)",
-            background: "rgba(0,0,0,0.3)", // camada escura sobre o fundo
-          }}
-        >
-          {/* Label da seção de frete */}
-          <p style={{
-            fontSize: ".8rem", color: "#888", marginBottom: "8px",
-            fontWeight: "bold", letterSpacing: "1px",
-          }}>
-            CALCULAR ENTREGA
-          </p>
-
-          {/* Campo CEP + botão OK */}
-          <div style={{ display: "flex", gap: "10px" }}>
-            <input
-              type="text"
-              placeholder="00000-000"
-              maxLength={9}
-              value={cep}
-              onChange={e => setCep(e.target.value)}
-              style={{
-                flex: 1,
-                background: "rgba(255,255,255,0.05)",      // campo escuro translúcido
-                border: "1px solid var(--glass-border)",
-                borderRadius: "8px",
-                padding: "12px",
-                color: "white",
-                outline: "none",
-                fontSize: "0.9rem",
-              }}
-            />
-            <button
-              onClick={calcularFrete}
-              style={{
-                background: "#ff416c", border: "none", borderRadius: "8px",
-                color: "white", padding: "0 20px", cursor: "pointer", fontWeight: "bold",
-              }}
-            >
-              {/* Mostra "..." enquanto consulta o CEP, "OK" quando ocioso */}
-              {loadingFrete ? "..." : "OK"}
-            </button>
-          </div>
-
-          {/* Texto de retorno da consulta CEP (cidade e UF) em verde */}
-          {freteInfo && (
-            <p style={{ marginTop: "10px", fontSize: ".85rem", color: "#4caf50" }}>
-              {freteInfo}
-            </p>
-          )}
-
-          {/* Linha de frete */}
-          <div style={{ display: "flex", justifyContent: "space-between", margin: "10px 0", color: "#bbb" }}>
-            <span>Frete:</span>
-            <span>{freteGlobal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-          </div>
-
-          {/* Total em destaque (fonte maior, negrito) */}
-          <div style={{
-            display: "flex", justifyContent: "space-between",
-            fontWeight: "700", fontSize: "1.4rem", marginBottom: "20px",
-          }}>
-            <span>Total:</span>
-            <span>{total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-          </div>
-
-          {/* Botão Finalizar Pedido: fecha a sidebar e abre o Checkout.
-              btn-buy → classe CSS do index.css com gradiente e hover animado. */}
-          <button
-            className="btn-buy"
-            onClick={() => {
-              if (cartOrder.length === 0) {
-                alert("Adicione produtos ao carrinho!");
-                return;
-              }
-              setIsOpen(false);   // fecha a sidebar
-              abrirCheckout();    // chama a função recebida via props para abrir o Checkout
-            }}
-            style={{
-              width: "100%", padding: "20px", borderRadius: "12px",
-              fontSize: "1.1rem", fontWeight: "bold", cursor: "pointer", border: "none",
-            }}
-          >
-            Finalizar Pedido
-          </button>
-        </div>
-      </aside>
-    </>
-  );
+  // A experiência mobile usa um portal direto no body: evita que transforms,
+  // overflow ou stacking contexts da moldura do telefone cortem o carrinho.
+  return mobile ? createPortal(<div className="mobile-cart-layer">{conteudo}</div>, document.body) : conteudo;
 }

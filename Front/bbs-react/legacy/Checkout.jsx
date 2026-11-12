@@ -1,3 +1,4 @@
+// ARQUIVADO: versao anterior, sem persistencia de pedidos. Nao importada pelo aplicativo.
 // ============================================================
 //  Checkout.jsx  —  Fluxo de finalização de compra (3 etapas)
 //

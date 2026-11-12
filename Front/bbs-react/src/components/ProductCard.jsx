@@ -11,7 +11,7 @@ export default function ProductCard({ produto }) {
   const { addToCart } = useCart();
 
   // Desestrutura os campos do produto recebido via props
-  const { id, nome, desc, preco, img, info } = produto;
+  const { id, nome, desc, preco, img } = produto;
 
   return (
     // article: elemento semântico para um item independente de conteúdo
