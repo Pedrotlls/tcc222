@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "../context/CartContext";
 import { checkCompatibility } from "../utils/compatibility";
@@ -11,6 +12,13 @@ export default function Cart({ abrirCheckout, mobile = false }) {
     syncError, syncBusy, reload,
   } = useCart();
 
+  useEffect(() => {
+    if (!mobile || !isOpen) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [mobile, isOpen]);
+
   if (!isOpen) return null;
 
   const items = cartOrder.map(id => ({ id, item: cart[id] })).filter(row => row.item);
@@ -23,7 +31,7 @@ export default function Cart({ abrirCheckout, mobile = false }) {
 
   const conteudo = <>
     <div className={mobile ? "mobile-cart-backdrop" : "cart-backdrop"} onClick={() => setIsOpen(false)} aria-hidden="true" />
-    <aside id="cart-sidebar" className={`cart-drawer ${mobile ? "cart-drawer-mobile" : ""}`} role="dialog" aria-modal="true" aria-label="Meu carrinho">
+    <aside id="cart-sidebar" className={`cart-drawer open ${mobile ? "cart-drawer-mobile" : ""}`} role="dialog" aria-modal="true" aria-label="Meu carrinho">
       <header className="cart-header">
         <div><span className="cart-kicker">BITS BYTES STORE</span><h2>Meu carrinho <small>({items.reduce((n, row) => n + row.item.qty, 0)} itens)</small></h2></div>
         <button type="button" onClick={() => setIsOpen(false)} aria-label="Fechar carrinho">×</button>
