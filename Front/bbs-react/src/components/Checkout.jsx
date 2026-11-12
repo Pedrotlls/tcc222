@@ -91,7 +91,8 @@ export default function Checkout({ fechar, onComplete, mobile = false }) {
   function voltarAoCarrinho() {
     fechar();
     setIsOpen(true);
-  }\n  async function confirmar() {
+  }
+  async function confirmar() {
     if(lock.current) return;
     lock.current = true;setBusy(true);setError("");
     try {
