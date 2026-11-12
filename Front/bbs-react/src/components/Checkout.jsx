@@ -8,7 +8,7 @@ import { request } from "../services/api";
 import { calcularTotais, criarChavePedido } from "../utils/checkout";
 const fmt = v => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 export default function Checkout({ fechar, onComplete, mobile = false }) {
-  const { cart, cartOrder, subtotal, limparCarrinho } = useCart();
+  const { cart, cartOrder, subtotal, limparCarrinho, setIsOpen } = useCart();
   const [error, setError] = useState("");
   const [step, setStep] = useState(1);
   const [endereco, setEndereco] = useState({ cep:"", rua:"", numero:"", complemento:"", bairro:"", cidade:"", uf:"" });
@@ -88,7 +88,7 @@ export default function Checkout({ fechar, onComplete, mobile = false }) {
     } catch(e) {setError(e.message);}
     finally {setBusy(false);}
   }
-  async function confirmar() {
+  function voltarAoCarrinho() {\n    fechar();\n    setIsOpen(true);\n  }\n  async function confirmar() {
     if(lock.current) return;
     lock.current = true;setBusy(true);setError("");
     try {
@@ -118,7 +118,7 @@ export default function Checkout({ fechar, onComplete, mobile = false }) {
               <div><h3>{cart[id].name}</h3><p>Quantidade: {cart[id].qty}</p></div><strong>{fmt(cart[id].price*cart[id].qty)}</strong>
             </div>)}
           </section>
-          <div className="ck-nav"><button className="ck-prev" onClick={fechar}>← Voltar à loja</button><button className="ck-next" onClick={() => setStep(2)}>Continuar para entrega →</button></div>
+          <div className="ck-nav"><button className="ck-prev" onClick={voltarAoCarrinho}>← Editar carrinho</button><button className="ck-next" onClick={() => setStep(2)}>Continuar para entrega →</button></div>
         </>}
         {step === 2 && <form onSubmit={e => {e.preventDefault();if(endereco.cep.replace(/\D/g,"").length!==8){setError("CEP deve ter 8 dígitos.");return;}cotar();}}>
           <fieldset disabled={busy || carregandoEnderecos} className="ck-card ck-address"><legend className="ck-title">Endereço de entrega</legend>
