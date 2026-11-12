@@ -109,3 +109,45 @@
 #cart-sidebar.cart-drawer-mobile .cart-checkout-button { min-height:50px!important; }
 :root[data-theme="light"] #cart-sidebar.cart-drawer-mobile { background:#f6f7fb!important; color:#263047!important; }
 :root[data-theme="light"] #cart-sidebar.cart-drawer-mobile .cart-drawer-footer { background:#fff!important; color:#263047!important; }
+
+/* Estrutura compartilhada do carrinho; no mobile ela é confinada ao portal. */
+.cart-backdrop { position:fixed; inset:0; z-index:3999; background:rgba(0,0,0,.62); }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) {
+  position:fixed; top:0; right:0; bottom:0; z-index:4000;
+  width:min(440px,100vw); height:100dvh; max-width:100vw; box-sizing:border-box;
+  display:flex; flex-direction:column; overflow:hidden; padding:0;
+  background:#111017; color:#f8f6fa; border-left:1px solid #ffffff18;
+}
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-header {
+  flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+  padding:20px; background:#17131c; border-bottom:1px solid #ffffff14;
+}
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-header h2 { margin:4px 0 0; color:#fff; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-header > button {
+  min-width:44px; min-height:44px; border:1px solid #ffffff20; border-radius:10px;
+  background:#ffffff0b; color:#fff; font-size:1.8rem; cursor:pointer;
+}
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-drawer-content { flex:1 1 auto; min-height:0; overflow-y:auto; padding:14px 20px; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-items-list { display:flex; flex-direction:column; gap:0; padding:0; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-item {
+  display:grid; grid-template-columns:68px minmax(0,1fr); gap:10px; align-items:center;
+  padding:14px 0; margin:0; border-bottom:1px solid #ffffff12;
+}
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-item > img,
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-item-placeholder { width:68px; height:68px; object-fit:contain; border-radius:10px; background:#ffffff0a; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-item-info { display:flex; flex-direction:column; gap:4px; min-width:0; overflow-wrap:anywhere; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-item-info strong { color:#fff; font-size:.8rem; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-item-info span { color:#aaa; font-size:.7rem; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-item-info b { color:#ff718b; font-size:.82rem; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-qty-controls { grid-column:2; display:flex; align-items:center; gap:7px; margin:0; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-qty-controls output { min-width:22px; text-align:center; color:inherit; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-drawer-footer { flex:0 0 auto; padding:20px; background:#17131c; border-top:1px solid #ffffff18; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-drawer-footer p { color:#aaa; font-size:.75rem; line-height:1.5; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-subtotal { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-subtotal strong { color:#ff718b; font-size:1.2rem; }
+#cart-sidebar.cart-drawer:not(.cart-drawer-mobile) .cart-checkout-button { width:100%; min-height:50px; border:0; border-radius:10px; background:linear-gradient(100deg,#ff416c,#ff693e); color:#fff; font-weight:700; cursor:pointer; }
+:root[data-theme="light"] #cart-sidebar.cart-drawer { background:#f6f7fb; color:#263047; border-color:#e1e5ed; }
+:root[data-theme="light"] #cart-sidebar.cart-drawer .cart-header,
+:root[data-theme="light"] #cart-sidebar.cart-drawer .cart-drawer-footer { background:#fff; }
+:root[data-theme="light"] #cart-sidebar.cart-drawer .cart-header h2,
+:root[data-theme="light"] #cart-sidebar.cart-drawer .cart-item-info strong { color:#263047; }
