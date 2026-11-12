@@ -1,152 +1,78 @@
-// ============================================================
-//  Cart.jsx  —  Sidebar do carrinho de compras
-//  Painel lateral que desliza da direita com os itens do carrinho,
-//  subtotal e botão de finalizar pedido.
-// ============================================================
-
+import { createPortal } from "react-dom";
 import { useCart } from "../context/CartContext";
 import { checkCompatibility } from "../utils/compatibility";
+import "./cart-mobile.css";
+
+const money = value => Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export default function Cart({ abrirCheckout, mobile = false }) {
-  // Cart.jsx: Sidebar do carrinho (version principal)
-  // - Mostra itens do carrinho (via CartContext)
-  // - Mostra o subtotal; o frete é cotado no checkout
-  // - Ao finalizar, chama abrirCheckout() para abrir o fluxo de compra.
-  // Dados e funções do contexto global do carrinho
   const {
-    cart,           // Objeto com todos os itens { [id]: { name, price, img, qty } }
-    cartOrder,      // Array de IDs na ordem de inserção
-    changeQty,      // Função para incrementar/decrementar quantidade
-    subtotal,       // Total dos produtos; frete ainda não cotado
-    isOpen,         // Sidebar visível (true) ou oculta (false)
-    setIsOpen, syncError, syncBusy, reload,
+    cart, cartOrder, changeQty, subtotal, isOpen, setIsOpen,
+    syncError, syncBusy, reload,
   } = useCart();
-  const compatibilityWarnings=checkCompatibility(cartOrder.map(id=>cart[id]).filter(Boolean));
+
   if (!isOpen) return null;
 
-  return (
-    <>
-      {/* Overlay escuro atrás da sidebar: clicar aqui fecha o carrinho.
-          Só renderizado quando isOpen é true. */}
-      {isOpen && (
-        <div
-          className={mobile ? "mobile-cart-overlay" : ""}
-          onClick={() => setIsOpen(false)}
-          style={{
-            position: "fixed", inset: 0,
-            background: "rgba(0,0,0,0.6)", // fundo semitransparente escuro
-            zIndex: 3999,
-          }}
-        />
-      )}
+  const items = cartOrder.map(id => ({ id, item: cart[id] })).filter(row => row.item);
+  const warnings = checkCompatibility(items.map(row => row.item));
+  const finalizar = () => {
+    if (!items.length || syncBusy) return;
+    setIsOpen(false);
+    abrirCheckout();
+  };
 
-      {/* ── Sidebar ──────────────────────────────────────────
-          cart-sidebar → classe CSS do index.css que controla a
-          animação de slide (translateX). A classe "open" ativa a
-          transição de fora para dentro da tela. */}
-      <aside id="cart-sidebar" className={`${isOpen ? "open" : ""}${mobile ? " cart-sidebar-mobile" : ""}`} aria-label="Meu carrinho">
+  const conteudo = <>
+    <div className={mobile ? "mobile-cart-backdrop" : "cart-backdrop"} onClick={() => setIsOpen(false)} aria-hidden="true" />
+    <aside id="cart-sidebar" className={`cart-drawer ${mobile ? "cart-drawer-mobile" : ""}`} role="dialog" aria-modal="true" aria-label="Meu carrinho">
+      <header className="cart-header">
+        <div><span className="cart-kicker">BITS BYTES STORE</span><h2>Meu carrinho <small>({items.reduce((n, row) => n + row.item.qty, 0)} itens)</small></h2></div>
+        <button type="button" onClick={() => setIsOpen(false)} aria-label="Fechar carrinho">×</button>
+      </header>
 
-        {/* Cabeçalho da sidebar com título e botão fechar (×) */}
-        <div className="cart-header">
-          <h2>Meu Setup</h2>
-          <button
-            onClick={() => setIsOpen(false)}
-            style={{
-              background: "none", border: "none", color: "white",
-              fontSize: "2.5rem", cursor: "pointer", lineHeight: 1,
-            }}
-          >
-            &times;
-          </button>
-        </div>
+      {syncError && <div className="cart-sync-error" role="alert"><span>{syncError}</span><button type="button" onClick={reload}>Tentar novamente</button></div>}
+      {syncBusy && <p className="cart-sync-status" role="status">Atualizando seu carrinho…</p>}
 
-        {/* ── Lista de itens ──────────────────────────────────
-            Scroll vertical independente para não travar o footer */}
-        {syncError && <p className="bbs-error" role="alert">{syncError}<button onClick={reload}>Tentar sincronizar</button></p>}
-        {syncBusy && <p role="status">Sincronizando carrinho…</p>}
-        <section className="cart-compatibility" aria-label="Verificação de compatibilidade">{compatibilityWarnings.length>0 && <><strong>Verificação do setup</strong>{compatibilityWarnings.map((warning,i)=><p key={i} className={warning.level}>{warning.title}: {warning.detail}</p>)}<small>Resultado baseado nas especificações preenchidas no cadastro. Confirme sempre com o fabricante.</small></>}</section><div className="cart-items-list" id="cart-items">
-          {cartOrder.length === 0 ? (
-            // Mensagem quando o carrinho está vazio
-            <p style={{ color: "#888", padding: "20px", textAlign: "center" }}>
-              Carrinho vazio
-            </p>
-          ) : (
-            cartOrder.map(id => {
-              const item = cart[id];
-              if (!item) return null;
-              return (
-                <div key={id} className="cart-item">
-                  {/* Miniatura do produto */}
-                  {item.img && <img src={item.img} alt={item.name} width={60} onError={e => {e.currentTarget.style.display="none";}} />}
+      <div className="cart-drawer-content">
+        {warnings.length > 0 && <section className="cart-compatibility" aria-label="Compatibilidade do setup">
+          <strong>Verificação do setup</strong>
+          {warnings.map((warning, i) => <p key={i} className={warning.level}>{warning.title}: {warning.detail}</p>)}
+          <small>Confira as especificações do fabricante antes da compra.</small>
+        </section>}
 
-                  {/* Nome e preço */}
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontWeight: "bold" }}>{item.name}</p>
-                    <p style={{ margin: 0, color: "#ff416c" }}>
-                      {item.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                    </p>
-                  </div>
+        {items.length === 0 ? <div className="cart-empty">
+          <span aria-hidden="true">🛒</span><h3>Seu carrinho está vazio</h3>
+          <p>Explore o catálogo e adicione os produtos que deseja.</p>
+          <button type="button" onClick={() => setIsOpen(false)}>Continuar comprando</button>
+        </div> : <div className="cart-items-list" id="cart-items">
+          {items.map(({ id, item }) => <article className="cart-item" key={id}>
+            {item.img ? <img src={item.img} alt="" onError={e => { e.currentTarget.style.visibility = "hidden"; }} /> : <span className="cart-item-placeholder">BBS</span>}
+            <div className="cart-item-info">
+              <strong>{item.name}</strong>
+              <span>{money(item.price)} / un.</span>
+              <b>{money(item.price * item.qty)}</b>
+            </div>
+            <div className="cart-qty-controls" aria-label={`Quantidade de ${item.name}`}>
+              <button type="button" className="cart-qty-btn" aria-label={`Diminuir ${item.name}`} disabled={syncBusy} onClick={() => changeQty(id, -1)}>−</button>
+              <output aria-live="polite">{item.qty}</output>
+              <button type="button" className="cart-qty-btn cart-qty-add" aria-label={`Adicionar ${item.name}`} disabled={syncBusy || item.qty >= (item.max ?? 99)} onClick={() => changeQty(id, 1)}>+</button>
+              <button type="button" className="cart-qty-remove" disabled={syncBusy} onClick={() => changeQty(id, -item.qty)}>Remover</button>
+            </div>
+          </article>)}
+        </div>}
+      </div>
 
-                  {/* Controles de quantidade: -, contador, +, lixeira */}
-                  <div className="cart-qty-controls">
-                    <button className="cart-qty-btn" aria-label={"Diminuir " + item.name} onClick={() => changeQty(id, -1)}>-</button>
-                    <span>{item.qty}</span>
-                    <button className="cart-qty-btn cart-qty-add" aria-label={"Adicionar mais uma unidade de " + item.name} disabled={item.qty >= (item.max ?? 99)} onClick={() => changeQty(id, +1)}>+</button>
-                    {/* Remove o item inteiro decrementando toda a quantidade */}
-                    <button className="cart-qty-remove" aria-label={"Remover " + item.name} onClick={() => changeQty(id, -item.qty)}>Remover</button>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+      <footer className="cart-drawer-footer">
+        <p>O frete e os descontos serão calculados na próxima etapa.</p>
+        <div className="cart-subtotal"><span>Subtotal</span><strong>{money(subtotal)}</strong></div>
+        <button type="button" className="cart-checkout-button" disabled={!items.length || syncBusy} onClick={finalizar}>
+          {syncBusy ? "Sincronizando…" : "Continuar para entrega"}
+        </button>
+        <small>Ambiente demonstrativo · Nenhum pagamento real</small>
+      </footer>
+    </aside>
+  </>;
 
-        {/* ── Footer: frete + total + botão finalizar ─────────
-            Fundo escuro levemente translúcido, separado por borda superior */}
-        <div
-          className="cart-footer"
-          style={{
-            padding: "30px",
-            borderTop: "1px solid var(--glass-border)",
-            background: "rgba(0,0,0,0.3)", // camada escura sobre o fundo
-          }}
-        >
-          <p style={{ color: "#bbb", lineHeight: 1.6 }}>
-            O frete será calculado no checkout conforme CEP/UF, quantidade,
-            valor do carrinho e modalidade.
-          </p>
-
-          {/* Total em destaque (fonte maior, negrito) */}
-          <div style={{
-            display: "flex", justifyContent: "space-between",
-            fontWeight: "700", fontSize: "1.4rem", marginBottom: "20px",
-          }}>
-            <span>Subtotal:</span>
-            <span>{subtotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-          </div>
-
-          {/* Botão Finalizar Pedido: fecha a sidebar e abre o Checkout.
-              btn-buy → classe CSS do index.css com gradiente e hover animado. */}
-          <button
-            disabled={syncBusy}
-            className="btn-buy"
-            onClick={() => {
-              if (cartOrder.length === 0) {
-                alert("Adicione produtos ao carrinho!");
-                return;
-              }
-              setIsOpen(false);   // fecha a sidebar
-              abrirCheckout();    // chama a função recebida via props para abrir o Checkout
-            }}
-            style={{
-              width: "100%", padding: "20px", borderRadius: "12px",
-              fontSize: "1.1rem", fontWeight: "bold", cursor: "pointer", border: "none",
-            }}
-          >
-            Finalizar Pedido
-          </button>
-        </div>
-      </aside>
-    </>
-  );
+  // A experiência mobile usa um portal direto no body: evita que transforms,
+  // overflow ou stacking contexts da moldura do telefone cortem o carrinho.
+  return mobile ? createPortal(<div className="mobile-cart-layer">{conteudo}</div>, document.body) : conteudo;
 }
