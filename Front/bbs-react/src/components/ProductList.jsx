@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { listarProdutosAtivos } from "../services/produtosService";
+import { request } from "../services/api";
 import { useCart } from "../context/CartContext";
 import Modal from "./Modal";
 import Reviews from "./Reviews";
+import Stars from "./Stars";
+import { comNotas, filtrarPorNota, indexarResumo } from "../utils/feedback";
 import HardwareArt from "./HardwareArt";
 import { categories, catalogView } from "./catalogView";
 import useFavorites from "./useFavorites";
@@ -26,6 +29,9 @@ export default function ProductList({ versao, usuario, abrirConta, favoritesOnly
   const [marca,setMarca]=useState("");
   const [maxPreco,setMaxPreco]=useState("");
   const [ordem,setOrdem] = useState("nome");
+  const [minNota,setMinNota] = useState("");
+  const [resumo,setResumo] = useState({});
+  const [notasVersao,setNotasVersao] = useState(0);
   const [selected,setSelected] = useState(null);
   const favorites=useFavorites(usuario,abrirConta);
   const [compareIds,setCompareIds]=useState([]);
@@ -37,10 +43,16 @@ export default function ProductList({ versao, usuario, abrirConta, favoritesOnly
       .finally(() => {if(active) setLoading(false);});
     return () => {active=false;};
   },[versao,retry]);
-  const source=favoritesOnly?favorites.items:produtos;
+  // Média e total de avaliações por produto; as estrelas são opcionais, então falhas não bloqueiam o catálogo.
+  useEffect(() => {
+    let active = true;
+    request("/avaliacoes/resumo").then(data => {if(active) setResumo(indexarResumo(data));}).catch(() => {});
+    return () => {active=false;};
+  },[versao,notasVersao]);
+  const source=comNotas(favoritesOnly?favorites.items:produtos,resumo);
   const comparisonSource=[...new Map([...favorites.items,...produtos].map(p=>[p.id,p])).values()];
   const comparison=compareIds.map(id=>comparisonSource.find(p=>p.id===id)).filter(Boolean);
-  const {filtered,groups}=catalogView(source.filter(p=>(!marca || p.marca===marca) && (!maxPreco || Number(p.preco)<=Number(maxPreco))),busca,categoria,ordem);
+  const {filtered,groups}=catalogView(filtrarPorNota(source.filter(p=>(!marca || p.marca===marca) && (!maxPreco || Number(p.preco)<=Number(maxPreco))),minNota),busca,categoria,ordem);
   const available=[...new Set([...Object.keys(categories),...source.map(p=>p.tipo || "outros")])];
   function comprar(p) { addToCart(p.id,p.nome,Number(p.preco),p.imgUrl || "",p.estoque,{tipo:p.tipo,descricao:p.descricao,marca:p.marca});setSelected(null); }
   function indisponivel(p) { return !p.ativo || p.estoque <= (cart[p.id]?.qty || 0); }
@@ -60,10 +72,11 @@ export default function ProductList({ versao, usuario, abrirConta, favoritesOnly
       <label>Marca<select aria-label="Marca" value={marca} onChange={e=>setMarca(e.target.value)}><option value="">Todas as marcas</option>{[...new Set(source.map(p=>p.marca).filter(Boolean))].sort().map(m=><option key={m}>{m}</option>)}</select></label>
       <label>Preço máximo<input type="number" min="0" step="0.01" value={maxPreco} onChange={e=>setMaxPreco(e.target.value)} placeholder="Sem limite"/></label>
       <label>Categoria<select value={categoria} onChange={e => setCategoria(e.target.value)}><option value="">Todas</option>{available.map(c => <option key={c} value={c}>{cats[c]||(c==="outros"?"Outros":c)}</option>)}</select></label>
-      <label>Ordenar<select value={ordem} onChange={e => setOrdem(e.target.value)}><option value="nome">Nome A–Z</option><option value="preco">Menor preço</option><option value="maior">Maior preço</option></select></label>
+      <label>Nota mínima<select aria-label="Nota mínima" value={minNota} onChange={e=>setMinNota(e.target.value)}><option value="">Qualquer nota</option><option value="4">4 ★ ou mais</option><option value="3">3 ★ ou mais</option><option value="2">2 ★ ou mais</option></select></label>
+      <label>Ordenar<select value={ordem} onChange={e => setOrdem(e.target.value)}><option value="nome">Nome A–Z</option><option value="preco">Menor preço</option><option value="maior">Maior preço</option><option value="nota">Melhor avaliados</option></select></label>
     </div>
     {loading ? <p className="bbs-info" role="status">Carregando catálogo…</p> : error ? <div className="bbs-info"><p className="bbs-error" role="alert">{error}</p><button onClick={() => {setLoading(true);setRetry(v => v+1);}}>Tentar novamente</button></div> : <>
-      <div className="sf-results"><p className="bbs-result-count" role="status">{filtered.length} produto(s) encontrado(s)</p>{(busca || categoria || marca || maxPreco || ordem!=="nome") && <button onClick={()=>{setBusca("");setCategoria("");setMarca("");setMaxPreco("");setOrdem("nome");}}>Limpar filtros ×</button>}</div>
+      <div className="sf-results"><p className="bbs-result-count" role="status">{filtered.length} produto(s) encontrado(s)</p>{(busca || categoria || marca || maxPreco || minNota || ordem!=="nome") && <button onClick={()=>{setBusca("");setCategoria("");setMarca("");setMaxPreco("");setMinNota("");setOrdem("nome");}}>Limpar filtros ×</button>}</div>
       {!filtered.length && <div className="sf-empty"><h3>{favoritesOnly?"Nenhum favorito encontrado.":"Nenhum produto por aqui."}</h3><p>{favoritesOnly?"Use o coração nos produtos para salvar na sua conta, ou limpe os filtros.":"Tente outro nome ou escolha uma categoria diferente."}</p></div>}
       {groups.map(group=><section className="sf-category-section" key={group.id} style={{"--category-accent":group.accent}} aria-labelledby={`category-${group.id}`}>
       <div className="sf-section-heading"><span className="sf-heading-line"/><div><h2 id={`category-${group.id}`}>{group.name}</h2><p>{group.tag}</p></div><span className="sf-heading-line"/></div>
@@ -71,14 +84,14 @@ export default function ProductList({ versao, usuario, abrirConta, favoritesOnly
         <div className="feature-card-top"><span className={`sf-stock ${!p.ativo || p.estoque<=0?"unavailable":""}`}>{!p.ativo || p.estoque<=0?"Indisponível":p.estoque<=5?"Últimas unidades":"Disponível"}</span><button className="feature-heart" disabled={favorites.pending!==null || favorites.loading || Boolean(favorites.error)} aria-pressed={favorites.items.some(f=>f.id===p.id)} aria-label={`${favorites.items.some(f=>f.id===p.id)?"Remover dos":"Adicionar aos"} favoritos: ${p.nome}`} onClick={()=>favorites.toggle(p)}>{favorites.items.some(f=>f.id===p.id)?"♥":"♡"}</button></div>
         <button className="bbs-product-image" onClick={() => setSelected(p)} aria-label={"Ver detalhes de "+p.nome}><ProductImage key={p.imgUrl} p={p}/></button>
         <span className="bbs-product-category"><HardwareArt tipo={p.tipo}/>{cats[p.tipo]||p.tipo||"Hardware"}</span>
-        {p.marca && <small>{p.marca}</small>}<h3 title={p.nome}>{p.nome}</h3><p>{(p.descricao||"").slice(0,100)}</p><strong>{money(p.preco)}</strong>
+        {p.marca && <small>{p.marca}</small>}<h3 title={p.nome}>{p.nome}</h3><div className="fb-card-rating"><Stars media={p.media} total={p.totalAvaliacoes}/></div><p>{(p.descricao||"").slice(0,100)}</p><strong>{money(p.preco)}</strong>
         <span>{p.estoque>0 ? p.estoque+" em estoque" : "Indisponível"}</span>
         <button className="bbs-buy" disabled={indisponivel(p)} onClick={() => comprar(p)}>{indisponivel(p) ? "Limite de estoque" : "Adicionar ao carrinho"}</button>
         <button className="bbs-details" onClick={() => setSelected(p)}>Ver detalhes</button>
         <label className="feature-compare-check"><input type="checkbox" checked={compareIds.includes(p.id)} disabled={!compareIds.includes(p.id) && compareIds.length>=3} onChange={()=>setCompareIds(ids=>toggleComparison(ids,p.id))}/>Comparar produto</label>
       </article>)}</div></section>)}
     </>}
-    {selected && <Modal title={selected.nome} fechar={() => setSelected(null)}><div className="bbs-detail-image"><ProductImage p={selected}/></div><p>{selected.marca && `Marca: ${selected.marca}`}</p><p>{selected.descricao||"Sem descrição adicional."}</p><p>Categoria: {cats[selected.tipo]||selected.tipo||"Hardware"} · Estoque: {selected.estoque}</p><h3>{money(selected.preco)}</h3><button className="bbs-primary" disabled={indisponivel(selected)} onClick={() => comprar(selected)}>Adicionar ao carrinho</button><Reviews key={selected.id} produtoId={selected.id} usuario={usuario} abrirConta={()=>{setSelected(null);abrirConta();}}/></Modal>}
+    {selected && <Modal title={selected.nome} fechar={() => setSelected(null)}><div className="bbs-detail-image"><ProductImage p={selected}/></div><Stars media={resumo[selected.id]?.media ?? 0} total={resumo[selected.id]?.total ?? 0}/><p>{selected.marca && `Marca: ${selected.marca}`}</p><p>{selected.descricao||"Sem descrição adicional."}</p><p>Categoria: {cats[selected.tipo]||selected.tipo||"Hardware"} · Estoque: {selected.estoque}</p><h3>{money(selected.preco)}</h3><button className="bbs-primary" disabled={indisponivel(selected)} onClick={() => comprar(selected)}>Adicionar ao carrinho</button><Reviews key={selected.id} produtoId={selected.id} usuario={usuario} onChange={()=>setNotasVersao(v=>v+1)} abrirConta={()=>{setSelected(null);abrirConta();}}/></Modal>}
     {comparison.length>0 && <div className="feature-compare-bar"><span>{comparison.length}/3 selecionados</span><button disabled={comparison.length<2} onClick={()=>setComparing(true)}>Comparar</button><button onClick={()=>setCompareIds([])}>Limpar</button></div>}
     {comparing && <Modal className="feature-comparison" title="Comparar produtos" fechar={()=>setComparing(false)}><p>Dados cadastrados no catálogo. Compare até três produtos; a descrição apresenta as especificações informadas.</p><div className="feature-table-scroll"><table><thead><tr><th>Característica</th>{comparison.map(p=><th key={p.id}>{p.nome}</th>)}</tr></thead><tbody>
       <tr><th>Imagem</th>{comparison.map(p=><td key={p.id}><div className="feature-compare-image"><ProductImage p={p}/></div></td>)}</tr>

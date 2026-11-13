@@ -1,5 +1,7 @@
 # Bits Bytes Store — TCC 2026
 
+**Atualização de feedback dos produtos:** execute também `database/08_feedback_produtos.sql` depois do 07, com a API parada. Adiciona votos "útil / não útil", estrelas no catálogo, exclusão da própria avaliação e moderação no painel admin. Detalhes em [FEEDBACK-PRODUTOS.md](docs/FEEDBACK-PRODUTOS.md).
+
 **Atualização de 29/09/2026:** execute também `database/07_recuperacao_senha.sql` depois do 06, com a API parada. Novo visual, atalhos mobile, relatórios e recuperação por e-mail. [Responsabilidades, instalação e configuração SMTP](docs/RECUPERACAO-E-RELATORIOS.md).
 
 Loja acadêmica de hardware em React, Spring Boot e **SQL Server**.

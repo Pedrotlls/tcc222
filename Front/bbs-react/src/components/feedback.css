@@ -1,0 +1,50 @@
+/* Feedback dos produtos: estrelas, avaliações, votos e moderação. */
+.fb-stars { display:flex; align-items:center; gap:8px; min-height:22px; }
+.fb-stars-track { position:relative; display:inline-block; color:#4d4256; font-size:1rem; letter-spacing:2px; line-height:1; white-space:nowrap; }
+.fb-stars-fill { position:absolute; left:0; top:0; overflow:hidden; white-space:nowrap; color:#ffbd68; }
+.fb-stars-text { color:#c8bccf; font-size:.75rem; }
+
+.fb-summary { display:flex; flex-wrap:wrap; align-items:center; gap:24px; margin:12px 0 18px; padding:16px; background:#ffffff05; border:1px solid #ffffff14; border-radius:12px; }
+.fb-score { text-align:center; min-width:96px; }
+.fb-score strong { display:block; font-size:2.2rem; line-height:1; color:#ffd68c; }
+.fb-score small { color:#b9b0c2; font-size:.7rem; }
+.fb-bars { flex:1; min-width:200px; display:grid; gap:6px; }
+.fb-bar { display:grid; grid-template-columns:34px 1fr 28px; align-items:center; gap:8px; font-size:.72rem; color:#cbbfd3; }
+.fb-bar i { display:block; height:8px; background:#2a2332; border-radius:99px; overflow:hidden; }
+.fb-bar i b { display:block; height:100%; background:linear-gradient(90deg,#ff8b48,#ff526c); border-radius:99px; }
+
+.fb-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.fb-toolbar label { display:flex; align-items:center; gap:8px; font-size:.75rem; }
+.fb-toolbar select { width:auto; }
+
+.fb-review { display:grid; gap:8px; padding:14px; margin:10px 0; background:#17141e; border:1px solid #413848; border-radius:12px; }
+.fb-review.fb-mine { border-color:#ff526c80; background:#ff526c0d; }
+.fb-review-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+.fb-review-head b { font-size:.85rem; }
+.fb-review p { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.55; }
+.fb-review small { color:#a99fb2; font-size:.68rem; }
+.fb-badge { display:inline-block; padding:2px 8px; border-radius:99px; background:#ff526c25; border:1px solid #ff526c70; color:#ffb4c3; font-size:.62rem; font-weight:600; }
+
+.fb-votes { display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:.72rem; color:#b9b0c2; }
+.product-reviews .fb-votes button, .product-reviews .fb-actions button { padding:6px 12px; border-radius:8px; border:1px solid #63546a; background:transparent; color:#eadbe9; font:inherit; font-size:.72rem; cursor:pointer; }
+.fb-votes button[aria-pressed="true"] { background:#ff526c22; border-color:#ff526c; color:#fff; }
+.fb-votes button:disabled, .fb-actions button:disabled { opacity:.5; cursor:wait; }
+.fb-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.fb-actions .fb-danger { border-color:#ff526c80; color:#ff9db0; }
+
+.fb-form { margin-top:16px; }
+.fb-form-actions { display:flex; flex-wrap:wrap; gap:8px; }
+
+/* Moderação no painel admin */
+.fb-admin-filters { display:flex; flex-wrap:wrap; gap:15px; margin:0 0 18px; }
+.fb-admin-filters label { flex:1; min-width:170px; font-size:.7rem; }
+.fb-admin-comment { max-width:360px; overflow-wrap:anywhere; white-space:pre-wrap; }
+.fb-admin-table td { vertical-align:top; }
+.fb-admin-table .fb-nowrap { white-space:nowrap; }
+.fb-confirm { display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:.7rem; }
+
+/* Cards do catálogo */
+.bbs-product .fb-stars { margin:-2px 0; }
+.sf-store .fb-card-rating { min-height:22px; }
+
+@media(max-width:600px) { .fb-summary { gap:14px; padding:12px; } .fb-score strong { font-size:1.8rem; } }

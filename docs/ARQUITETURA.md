@@ -137,8 +137,14 @@ sem peso, dimensões, distância exata ou contrato com transportadora.
 | GET/POST | /admin/cupons | Consultar/criar código, percentual, validade e limite |
 | PATCH | /admin/cupons/{codigo} | Alterar ativação |
 | GET | /avaliacoes/{produtoId} | Avaliações públicas, sem identificador do usuário |
+| GET | /avaliacoes/{produtoId}?ordem=recentes\|uteis | Avaliações públicas com votos úteis/não úteis; logado recebe `minha` e `meuVoto` |
+| GET | /avaliacoes/resumo | Média e total de avaliações por produto (estrelas do catálogo) |
 | PUT | /avaliacoes/{produtoId} | Criar/editar a própria avaliação após compra não cancelada |
+| DELETE | /avaliacoes/{produtoId} | Excluir a própria avaliação (remove os votos recebidos) |
+| PUT / DELETE | /avaliacoes/{id}/voto | Votar útil/não útil (um por cliente; não vale na própria avaliação) ou remover o voto |
+| GET | /admin/avaliacoes?nota=&produtoId= | Administrador: lista as 300 mais recentes com produto e votos |
+| DELETE | /admin/avaliacoes/{id} | Administrador: remove avaliação inadequada e seus votos |
 
-`bbs_carrinho_item` e `bbs_avaliacao` possuem FKs para usuário/produto e par único. `bbs_cupom` guarda percentual, validade e contador protegido por lock. Cupom substitui o desconto por modalidade; não acumula. Checkout grava pedido, baixa estoque, consome cupom e limpa carrinho em uma transação. Cancelamento não devolve uso do cupom.
+`bbs_avaliacao_voto` (script 08) guarda um voto por cliente/avaliação. `bbs_carrinho_item` e `bbs_avaliacao` possuem FKs para usuário/produto e par único. `bbs_cupom` guarda percentual, validade e contador protegido por lock. Cupom substitui o desconto por modalidade; não acumula. Checkout grava pedido, baixa estoque, consome cupom e limpa carrinho em uma transação. Cancelamento não devolve uso do cupom.
 
 O carrinho dispara eventos SSE em uma instância de API e recupera alterações por consulta a cada dez segundos ou ao retornar à aba. Não reserva estoque. Cada navegador autentica-se separadamente; tokens não são compartilhados entre dispositivos. Consulte ESCOPO-ATUAL.md para regras e limites de implantação.

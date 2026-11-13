@@ -48,4 +48,4 @@ Pagamentos, promoções por modalidade, frete e entrega são demonstrativos. Int
 
 Pare a API; execute `05_tokens_autenticacao.sql` e `06_escopo_loja.sql` após as migrações anteriores. O 06 preserva os dados existentes e pode ser repetido. A aplicação valida o esquema ao iniciar.
 
-Tabelas: produto, bbs_usuario, bbs_compra, bbs_compra_item, bbs_compra_historico, bbs_favorito, bbs_endereco, bbs_sessao_token, bbs_cupom, bbs_avaliacao, bbs_carrinho_item e bbs_recuperacao_senha.
+Tabelas: produto, bbs_usuario, bbs_compra, bbs_compra_item, bbs_compra_historico, bbs_favorito, bbs_endereco, bbs_sessao_token, bbs_cupom, bbs_avaliacao, bbs_avaliacao_voto, bbs_carrinho_item e bbs_recuperacao_senha.

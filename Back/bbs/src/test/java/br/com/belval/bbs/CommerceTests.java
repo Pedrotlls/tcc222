@@ -27,7 +27,7 @@ class CommerceTests {
     @Autowired CompraRepository compras;
     Integer produtoId;
     @BeforeEach void dados() {
-        jdbc.update("DELETE FROM bbs_avaliacao");jdbc.update("DELETE FROM bbs_carrinho_item");jdbc.update("DELETE FROM bbs_cupom");jdbc.update("DELETE FROM bbs_sessao_token");jdbc.update("DELETE FROM bbs_endereco");compras.deleteAll();usuarios.deleteAll();produtos.deleteAll();
+        jdbc.update("DELETE FROM bbs_avaliacao_voto");jdbc.update("DELETE FROM bbs_avaliacao");jdbc.update("DELETE FROM bbs_carrinho_item");jdbc.update("DELETE FROM bbs_cupom");jdbc.update("DELETE FROM bbs_sessao_token");jdbc.update("DELETE FROM bbs_endereco");compras.deleteAll();usuarios.deleteAll();produtos.deleteAll();
         Usuario u=new Usuario();u.nome="Cliente teste";u.email="cliente@teste.local";u.senhaHash="hash-nao-utilizado";
         usuarios.save(u);
         Produto p=new Produto();p.setNome("SSD teste");p.setPreco(new BigDecimal("100.00"));p.setEstoque(2);p.setTipo("ssd");
@@ -242,6 +242,87 @@ class CommerceTests {
         for(int i=0;i<2;i++)mvc.perform(put("/avaliacoes/"+produtoId).with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(body)).andExpect(status().isOk());
         mvc.perform(get("/avaliacoes/"+produtoId)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].nota").value(5)).andExpect(jsonPath("$[0].usuarioId").doesNotExist());
         mvc.perform(put("/avaliacoes/"+produtoId).with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(body.replace(":5",":6"))).andExpect(status().isBadRequest());
+    }
+    // ---------- Feedback dos produtos: votos, resumo, exclusão e moderação ----------
+    static final String OUTRO="outro@teste.local";
+    /** Cliente compra e avalia o produto de teste; devolve o id da avaliação. */
+    long avaliacaoDeCliente(int nota,String comentario) throws Exception {
+        mvc.perform(post("/pedidos").with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(pedido(1,"pedido-feedback-"+nota+comentario.length()))).andExpect(status().isCreated());
+        var r=mvc.perform(put("/avaliacoes/"+produtoId).with(user("cliente@teste.local")).with(csrf()).contentType("application/json")
+            .content("{\"nota\":"+nota+",\"comentario\":\""+comentario+"\"}")).andExpect(status().isOk()).andExpect(jsonPath("$.minha").value(true)).andReturn();
+        return json.readTree(r.getResponse().getContentAsString()).get("id").asLong();
+    }
+    void outroCliente(){
+        Usuario u=new Usuario();u.nome="Outro cliente";u.email=OUTRO;u.senhaHash="hash-nao-utilizado";usuarios.save(u);
+    }
+    @Test void votosUteisSaoUnicosPorClienteEBloqueiamAutoVoto() throws Exception {
+        long id=avaliacaoDeCliente(5,"Excelente");outroCliente();
+        String util="{\"util\":true}",naoUtil="{\"util\":false}",voto="/avaliacoes/"+id+"/voto";
+        mvc.perform(put(voto).with(csrf()).contentType("application/json").content(util)).andExpect(status().isUnauthorized());
+        mvc.perform(put(voto).with(user("cliente@teste.local")).with(csrf()).contentType("application/json").content(util)).andExpect(status().isForbidden());
+        mvc.perform(put(voto).with(user(OUTRO)).with(csrf()).contentType("application/json").content("{}")).andExpect(status().isBadRequest());
+        mvc.perform(put("/avaliacoes/999999/voto").with(user(OUTRO)).with(csrf()).contentType("application/json").content(util)).andExpect(status().isNotFound());
+        for(int i=0;i<2;i++)mvc.perform(put(voto).with(user(OUTRO)).with(csrf()).contentType("application/json").content(util))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.uteis").value(1)).andExpect(jsonPath("$.naoUteis").value(0)).andExpect(jsonPath("$.meuVoto").value(true));
+        assertThat(jdbc.queryForObject("select count(*) from bbs_avaliacao_voto",Integer.class)).isEqualTo(1);
+        mvc.perform(put(voto).with(user(OUTRO)).with(csrf()).contentType("application/json").content(naoUtil))
+            .andExpect(jsonPath("$.uteis").value(0)).andExpect(jsonPath("$.naoUteis").value(1)).andExpect(jsonPath("$.meuVoto").value(false));
+        mvc.perform(delete(voto).with(user(OUTRO)).with(csrf())).andExpect(status().isOk())
+            .andExpect(jsonPath("$.uteis").value(0)).andExpect(jsonPath("$.naoUteis").value(0)).andExpect(jsonPath("$.meuVoto").doesNotExist());
+    }
+    @Test void listagemInformaVotosMinhaAvaliacaoEOrdenaPorUtilidade() throws Exception {
+        long primeira=avaliacaoDeCliente(4,"Bom");outroCliente();
+        Usuario terceiro=new Usuario();terceiro.nome="Terceiro";terceiro.email="terceiro@teste.local";terceiro.senhaHash="x";usuarios.save(terceiro);
+        mvc.perform(post("/pedidos").with(user(OUTRO)).with(csrf()).contentType("application/json").content(pedido(1,"pedido-feedback-outro"))).andExpect(status().isCreated());
+        mvc.perform(put("/avaliacoes/"+produtoId).with(user(OUTRO)).with(csrf()).contentType("application/json").content("{\"nota\":2,\"comentario\":\"Mais recente\"}")).andExpect(status().isOk());
+        mvc.perform(put("/avaliacoes/"+primeira+"/voto").with(user("terceiro@teste.local")).with(csrf()).contentType("application/json").content("{\"util\":true}")).andExpect(status().isOk());
+        // Padrão: mais recente primeiro. Para um visitante não há "minha" nem meuVoto.
+        mvc.perform(get("/avaliacoes/"+produtoId)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].comentario").value("Mais recente")).andExpect(jsonPath("$[0].minha").value(false))
+            .andExpect(jsonPath("$[1].uteis").value(1)).andExpect(jsonPath("$[1].meuVoto").doesNotExist()).andExpect(jsonPath("$[0].usuarioId").doesNotExist());
+        // Mais úteis: a primeira (saldo +1) sobe; o terceiro enxerga o próprio voto.
+        mvc.perform(get("/avaliacoes/"+produtoId+"?ordem=uteis").with(user("terceiro@teste.local")))
+            .andExpect(jsonPath("$[0].comentario").value("Bom")).andExpect(jsonPath("$[0].meuVoto").value(true)).andExpect(jsonPath("$[0].minha").value(false));
+        mvc.perform(get("/avaliacoes/"+produtoId).with(user(OUTRO))).andExpect(jsonPath("$[0].minha").value(true));
+        mvc.perform(get("/avaliacoes/"+produtoId+"?ordem=aleatoria")).andExpect(status().isBadRequest());
+    }
+    @Test void resumoCalculaMediaETotalPorProduto() throws Exception {
+        mvc.perform(get("/avaliacoes/resumo")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        avaliacaoDeCliente(5,"Excelente");outroCliente();
+        mvc.perform(post("/pedidos").with(user(OUTRO)).with(csrf()).contentType("application/json").content(pedido(1,"pedido-resumo-outro"))).andExpect(status().isCreated());
+        mvc.perform(put("/avaliacoes/"+produtoId).with(user(OUTRO)).with(csrf()).contentType("application/json").content("{\"nota\":2,\"comentario\":\"Regular\"}")).andExpect(status().isOk());
+        mvc.perform(get("/avaliacoes/resumo")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].produtoId").value(produtoId)).andExpect(jsonPath("$[0].media").value(3.5)).andExpect(jsonPath("$[0].total").value(2));
+    }
+    @Test void clienteExcluiSomenteAPropriaAvaliacaoEOsVotosSaemJunto() throws Exception {
+        mvc.perform(delete("/avaliacoes/"+produtoId).with(csrf())).andExpect(status().isUnauthorized());
+        mvc.perform(delete("/avaliacoes/"+produtoId).with(user("cliente@teste.local")).with(csrf())).andExpect(status().isNotFound());
+        long id=avaliacaoDeCliente(3,"Razoavel");outroCliente();
+        mvc.perform(put("/avaliacoes/"+id+"/voto").with(user(OUTRO)).with(csrf()).contentType("application/json").content("{\"util\":true}")).andExpect(status().isOk());
+        mvc.perform(delete("/avaliacoes/"+produtoId).with(user(OUTRO)).with(csrf())).andExpect(status().isNotFound());
+        mvc.perform(delete("/avaliacoes/"+produtoId).with(user("cliente@teste.local"))).andExpect(status().isForbidden());
+        mvc.perform(delete("/avaliacoes/"+produtoId).with(user("cliente@teste.local")).with(csrf())).andExpect(status().isNoContent());
+        assertThat(jdbc.queryForObject("select count(*) from bbs_avaliacao",Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from bbs_avaliacao_voto",Integer.class)).isZero();
+        mvc.perform(get("/avaliacoes/"+produtoId)).andExpect(jsonPath("$.length()").value(0));
+    }
+    @Test void moderacaoDoAdminListaFiltraERemoveAvaliacoes() throws Exception {
+        long id=avaliacaoDeCliente(1,"Ofensivo");outroCliente();
+        mvc.perform(put("/avaliacoes/"+id+"/voto").with(user(OUTRO)).with(csrf()).contentType("application/json").content("{\"util\":false}")).andExpect(status().isOk());
+        mvc.perform(get("/admin/avaliacoes")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/admin/avaliacoes").with(user("cliente@teste.local").roles("CLIENTE"))).andExpect(status().isForbidden());
+        var admin=user("admin@teste.local").roles("ADMIN");
+        mvc.perform(get("/admin/avaliacoes").with(admin)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].produto").value("SSD teste")).andExpect(jsonPath("$[0].autor").value("Cliente"))
+            .andExpect(jsonPath("$[0].naoUteis").value(1)).andExpect(jsonPath("$[0].usuarioId").doesNotExist()).andExpect(jsonPath("$[0].email").doesNotExist());
+        mvc.perform(get("/admin/avaliacoes?nota=1&produtoId="+produtoId).with(admin)).andExpect(jsonPath("$.length()").value(1));
+        mvc.perform(get("/admin/avaliacoes?nota=5").with(admin)).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(get("/admin/avaliacoes?nota=9").with(admin)).andExpect(status().isBadRequest());
+        mvc.perform(delete("/admin/avaliacoes/"+id).with(user("cliente@teste.local").roles("CLIENTE")).with(csrf())).andExpect(status().isForbidden());
+        mvc.perform(delete("/admin/avaliacoes/"+id).with(admin)).andExpect(status().isForbidden()); // CSRF obrigatório
+        mvc.perform(delete("/admin/avaliacoes/"+id).with(admin).with(csrf())).andExpect(status().isNoContent());
+        mvc.perform(delete("/admin/avaliacoes/"+id).with(admin).with(csrf())).andExpect(status().isNotFound());
+        assertThat(jdbc.queryForObject("select count(*) from bbs_avaliacao_voto",Integer.class)).isZero();
     }
     @Test void cpfValidaDigitosENaoVazaNaResposta() throws Exception {
         String body="{\"nome\":\"Teste CPF\",\"email\":\"cpf@teste.local\",\"senha\":\"TesteSeguro123\",\"cpf\":\"111.111.111-11\"}";

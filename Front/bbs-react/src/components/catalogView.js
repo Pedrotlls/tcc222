@@ -19,12 +19,15 @@ export const categories = {
   controle: {name:"Controles",tag:"GAMING · INPUT",accent:"#ff8b48"},
 };
 
+// Melhor avaliados: maior média, depois mais avaliações, depois nome. Sem avaliação (media 0) fica por último.
+const porNota = (a,b) => (b.media||0)-(a.media||0) || (b.totalAvaliacoes||0)-(a.totalAvaliacoes||0) || a.nome.localeCompare(b.nome,"pt-BR");
+
 export function catalogView(products, search, category, order) {
   const filtered = products.filter(p => (!category || (p.tipo || "outros") === category) &&
     `${p.nome} ${p.marca || ""} ${p.descricao || ""}`.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR")))
-    .sort((a,b) => order === "preco" ? a.preco-b.preco : order === "maior" ? b.preco-a.preco : a.nome.localeCompare(b.nome,"pt-BR"));
-  // Ao ordenar por preço, uma lista única mantém a ordem global solicitada.
-  if (order !== "nome" && !category) return {filtered,groups:[{id:"resultados",name:"Seu próximo upgrade",tag:"CATÁLOGO · POR PREÇO",accent:"#ff526c",items:filtered}]};
+    .sort((a,b) => order === "preco" ? a.preco-b.preco : order === "maior" ? b.preco-a.preco : order === "nota" ? porNota(a,b) : a.nome.localeCompare(b.nome,"pt-BR"));
+  // Ao ordenar por preço ou nota, uma lista única mantém a ordem global solicitada.
+  if (order !== "nome" && !category) return {filtered,groups:[{id:"resultados",name:"Seu próximo upgrade",tag:order==="nota"?"CATÁLOGO · POR AVALIAÇÃO":"CATÁLOGO · POR PREÇO",accent:"#ff526c",items:filtered}]};
   const ids = [...new Set([...Object.keys(categories),...filtered.map(p=>p.tipo || "outros")])];
   return {filtered,groups:ids.map(id=>({id,...(categories[id] || {name:id==="outros"?"Mais para o seu setup":id,tag:"BBS · HARDWARE",accent:"#ff526c"}),items:filtered.filter(p=>(p.tipo || "outros")===id)})).filter(g=>g.items.length)};
 }

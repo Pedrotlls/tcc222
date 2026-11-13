@@ -6,6 +6,7 @@ import Addresses from "./Addresses";
 import Sessions from "./Sessions";
 import Coupons from "./Coupons";
 import Reports from "./Reports";
+import ReviewsAdmin from "./ReviewsAdmin";
 import OrderHistory from "./OrderHistory";
 import CpfField from "./CpfField";
 import "./features.css";
@@ -115,6 +116,7 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
         {admin && <><button aria-pressed={tab==="clientes"} onClick={() => setTab("clientes")}>Clientes e usuários</button><button onClick={abrirProdutos}>Gerenciar produtos ↗</button></>}
         {admin && <button aria-pressed={tab==="relatorios"} onClick={()=>setTab("relatorios")}>Relatórios de vendas</button>}
         {admin && <button aria-pressed={tab==="cupons"} onClick={()=>setTab("cupons")}>Cupons de desconto</button>}
+        {admin && <button aria-pressed={tab==="avaliacoes"} onClick={()=>setTab("avaliacoes")}>Avaliações de produtos</button>}
         <button aria-pressed={tab==="enderecos"} onClick={() => setTab("enderecos")}>Meus endereços</button>
         <button aria-pressed={tab==="perfil"} onClick={() => setTab("perfil")}>Editar perfil</button>
         <button aria-pressed={tab==="sessoes"} onClick={() => setTab("sessoes")}>Acessos e segurança</button>
@@ -122,8 +124,8 @@ export default function Account({ usuario, onUsuario, fechar, abrirProdutos, onC
         <button disabled={busy} onClick={sair}>Sair</button>
       </div>
       <div className={admin ? "adm-content" : "account-content account-client-content"}>
-      <div className="adm-page-heading"><div><small>{admin ? "ADMINISTRAÇÃO / " : "MINHA CONTA / "}{tab.toUpperCase()}</small><h2>{tab==="relatorios"?"Relatórios de vendas":tab==="cupons"?"Cupons de desconto":tab==="sessoes"?"Acessos e segurança":tab==="enderecos"?"Meus endereços":tab==="perfil"?"Seu perfil":tab==="clientes"?"Clientes e usuários":admin?"Visão geral":"Meus pedidos"}</h2></div><button disabled={busy || loading} onClick={() => {setLoading(true);setRevision(v => v+1);}}>↻ Atualizar</button></div>
-      {tab === "relatorios" && admin ? <Reports key={revision}/> : tab === "cupons" && admin ? <Coupons/> : tab === "sessoes" ? <Sessions key={revision} onLogout={() => {onUsuario(null);fechar();}}/> : tab === "enderecos" ? <Addresses/> : tab === "perfil" ? <form className="bbs-form" onSubmit={perfil}>
+      <div className="adm-page-heading"><div><small>{admin ? "ADMINISTRAÇÃO / " : "MINHA CONTA / "}{tab.toUpperCase()}</small><h2>{tab==="relatorios"?"Relatórios de vendas":tab==="cupons"?"Cupons de desconto":tab==="avaliacoes"?"Avaliações de produtos":tab==="sessoes"?"Acessos e segurança":tab==="enderecos"?"Meus endereços":tab==="perfil"?"Seu perfil":tab==="clientes"?"Clientes e usuários":admin?"Visão geral":"Meus pedidos"}</h2></div><button disabled={busy || loading} onClick={() => {setLoading(true);setRevision(v => v+1);}}>↻ Atualizar</button></div>
+      {tab === "relatorios" && admin ? <Reports key={revision}/> : tab === "cupons" && admin ? <Coupons/> : tab === "avaliacoes" && admin ? <ReviewsAdmin key={revision}/> : tab === "sessoes" ? <Sessions key={revision} onLogout={() => {onUsuario(null);fechar();}}/> : tab === "enderecos" ? <Addresses/> : tab === "perfil" ? <form className="bbs-form" onSubmit={perfil}>
         <label>Nome<input name="nome" defaultValue={usuario.nome} required minLength={2} maxLength={100}/></label>
         <CpfField label="CPF (opcional — preencher para atualizar)" />
         <p>Preencha as duas senhas apenas se quiser alterar sua senha.</p>
