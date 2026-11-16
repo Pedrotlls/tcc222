@@ -4,6 +4,8 @@
 
 **Chatbot de dúvidas** (compatibilidade, preços, frete, montagem de PC): veja [CHATBOT.md](docs/CHATBOT.md).
 
+**Dados para apresentar:** depois do banco, execute `database/09_dados_demonstracao.sql` (45 produtos, 5 clientes de teste com senha `Demo@2026`, cupons `BBS10`/`PROMO20` e avaliações).
+
 **Banco em um único arquivo:** execute apenas `database/bbs_banco_completo.sql` (cria o banco `apibbs` e todas as 13 tabelas; pode repetir sem perder dados). Os scripts 01 a 08 continuam no repositório só como histórico de migração.
 
 **Atualização de feedback dos produtos:** execute também `database/08_feedback_produtos.sql` depois do 07, com a API parada. Adiciona votos "útil / não útil", estrelas no catálogo, exclusão da própria avaliação e moderação no painel admin. Detalhes em [FEEDBACK-PRODUTOS.md](docs/FEEDBACK-PRODUTOS.md).
