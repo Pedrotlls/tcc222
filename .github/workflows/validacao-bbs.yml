@@ -83,8 +83,9 @@ jobs:
         env:
           SQL_CONTAINER: ${{ job.services.sqlserver.id }}
         run: |
-          for script in database/01_criar_banco.sql database/03_atualizar_funcionalidades.sql database/04_enderecos_clientes.sql database/03_atualizar_funcionalidades.sql database/04_enderecos_clientes.sql database/05_tokens_autenticacao.sql database/05_tokens_autenticacao.sql database/06_escopo_loja.sql database/06_escopo_loja.sql database/07_recuperacao_senha.sql database/07_recuperacao_senha.sql database/08_feedback_produtos.sql database/08_feedback_produtos.sql; do
-            docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < "$script"
+          # Arquivo único; executado duas vezes para provar que é repetível.
+          for tentativa in 1 2; do
+            docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/bbs_banco_completo.sql
           done
       - run: sh mvnw --batch-mode package -DskipTests
         working-directory: Back/bbs
@@ -119,12 +120,7 @@ jobs:
             if ! curl -fsS http://127.0.0.1:8080/auth/session > /dev/null; then break; fi
             sleep 1
           done
-          docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/03_atualizar_funcionalidades.sql
-          docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/04_enderecos_clientes.sql
-          docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/05_tokens_autenticacao.sql
-          docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/06_escopo_loja.sql
-          docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/07_recuperacao_senha.sql
-          docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/08_feedback_produtos.sql
+          docker exec -i "$SQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C -b < database/bbs_banco_completo.sql
           java -jar Back/bbs/target/bbs-0.0.1-SNAPSHOT.jar > Front/bbs-react/test-results/api-reinicio.log 2>&1 &
           for attempt in {1..60}; do
             if curl -fsS http://127.0.0.1:5173/api/auth/session > /dev/null; then exit 0; fi
