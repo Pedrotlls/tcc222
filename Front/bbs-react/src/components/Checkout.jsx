@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "../context/CartContext";
 import Modal from "./Modal";
+import Brindes from "./Brindes";
 import "./checkout.css";
 import "./addresses.css";
 import { emptyAddress } from "../utils/address";
@@ -100,7 +101,7 @@ export default function Checkout({ fechar, onComplete, mobile = false }) {
         chave, entrega, pagamento, cupom:cupomValido?.codigo || null, enderecoId:enderecoId?Number(enderecoId):null, endereco:{...endereco,cep:endereco.cep.replace(/\D/g,"")},
         itens
       }});
-      setPedido(result); limparCarrinho(); onComplete();
+      setPedido({...result,brindeBase:Number(result.subtotal ?? subtotal)}); limparCarrinho(); onComplete();
     } catch(e) {setError(e.message);}
     finally {lock.current=false;setBusy(false);}
   }
@@ -111,7 +112,7 @@ export default function Checkout({ fechar, onComplete, mobile = false }) {
     </ol>
     <p className="ck-demo">DEMONSTRAÇÃO ACADÊMICA · Sem cobrança real. Não informe dados bancários.</p>
     {error && <p role="alert" className="bbs-error">{error}</p>}
-    {pedido ? <section className="ck-success ck-card" role="status"><div className="ck-success-icon">✓</div><h2>Pedido registrado!</h2><p>Seu pedido foi salvo e o estoque foi atualizado.</p><strong className="ck-order-code">PEDIDO #{pedido.id}</strong><h3>{fmt(pedido.total)}</h3><p className="order-code">Código de acompanhamento: {pedido.acompanhamento}</p><p>Acompanhe o status em Minha conta. Nenhum pagamento foi realizado.</p><button className="ck-next" onClick={fechar}>Voltar à loja</button></section> :
+    {pedido ? <section className="ck-success ck-card" role="status"><div className="ck-success-icon">✓</div><h2>Pedido registrado!</h2><p>Seu pedido foi salvo e o estoque foi atualizado.</p><strong className="ck-order-code">PEDIDO #{pedido.id}</strong><h3>{fmt(pedido.total)}</h3><p className="order-code">Código de acompanhamento: {pedido.acompanhamento}</p><p>Acompanhe o status em Minha conta. Nenhum pagamento foi realizado.</p><Brindes pedido valor={pedido.brindeBase} /><button className="ck-next" onClick={fechar}>Voltar à loja</button></section> :
     itens.length === 0 ? <section className="ck-card"><h2>Seu carrinho está vazio</h2><button className="ck-next" onClick={fechar}>Voltar à loja</button></section> :
     <div className="ck-layout">
       <div className="ck-main">
@@ -122,6 +123,7 @@ export default function Checkout({ fechar, onComplete, mobile = false }) {
               <div><h3>{cart[id].name}</h3><p>Quantidade: {cart[id].qty}</p></div><strong>{fmt(cart[id].price*cart[id].qty)}</strong>
             </div>)}
           </section>
+          <Brindes valor={subtotal} />
           <div className="ck-nav"><button className="ck-prev" onClick={voltarAoCarrinho}>← Editar carrinho</button><button className="ck-next" onClick={() => setStep(2)}>Continuar para entrega →</button></div>
         </>}
         {step === 2 && <form onSubmit={e => {e.preventDefault();if(endereco.cep.replace(/\D/g,"").length!==8){setError("CEP deve ter 8 dígitos.");return;}cotar();}}>

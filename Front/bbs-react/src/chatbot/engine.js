@@ -119,6 +119,8 @@ function respostaFrete(mensagem, extra, contexto, produtos) {
 const FAQ = [
   [/\b(pagamento|pagar|pix|boleto|cartao|credito|debito|parcel\w*|forma de pagamento)\b/, () =>
     "Formas de pagamento no checkout:\n• PIX — 10% de desconto\n• Boleto — 7% de desconto\n• Crédito e débito — sem desconto\n\nImportante: os pagamentos são demonstrativos (QR Code e boleto fictícios), pois a BBS é um projeto acadêmico sem cobrança real."],
+  [/\b(brindes?|mimos?|ganhar|ganha|presentes?)\b/, () =>
+    "Brindes por valor dos produtos (sem frete e descontos), acumulativos:\n• Qualquer compra: Adesivo BBS\n• A partir de R$ 500: Chaveiro BBS\n• A partir de R$ 1.500: Mousepad BBS\n• A partir de R$ 3.000: Garrafa BBS\n• A partir de R$ 6.000: Moletom BBS\n\nVocê acompanha o progresso no carrinho e no checkout. São brindes demonstrativos: nada é cobrado nem enviado nesta versão acadêmica."],
   [/\b(cupom|cupons|desconto|promocao|codigo promocional)\b/, () =>
     "Cupons: digite o código no checkout e clique em \"Aplicar cupom\". Eles dão de 1% a 50%, têm validade e limite de usos, e substituem o desconto de PIX/boleto (não acumulam)."],
   [/\b(cancel\w*|desistir|arrepend\w*)\b/, () =>

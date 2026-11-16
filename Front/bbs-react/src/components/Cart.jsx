@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useCart } from "../context/CartContext";
 import { checkCompatibility } from "../utils/compatibility";
 import "./cart-mobile.css";
+import Brindes from "./Brindes";
 
 const money = value => Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -70,6 +71,7 @@ export default function Cart({ abrirCheckout, mobile = false }) {
       </div>
 
       <footer className="cart-drawer-footer">
+        <Brindes compacto valor={subtotal} />
         <p>O frete e os descontos serão calculados na próxima etapa.</p>
         <div className="cart-subtotal"><span>Subtotal</span><strong>{money(subtotal)}</strong></div>
         <button type="button" className="cart-checkout-button" disabled={!items.length || syncBusy} onClick={finalizar}>

@@ -1,5 +1,7 @@
 # Bits Bytes Store — TCC 2026
 
+**Brindes por valor de compra** (desktop e mobile): veja [BRINDES.md](docs/BRINDES.md).
+
 **Chatbot de dúvidas** (compatibilidade, preços, frete, montagem de PC): veja [CHATBOT.md](docs/CHATBOT.md).
 
 **Banco em um único arquivo:** execute apenas `database/bbs_banco_completo.sql` (cria o banco `apibbs` e todas as 13 tabelas; pode repetir sem perder dados). Os scripts 01 a 08 continuam no repositório só como histórico de migração.

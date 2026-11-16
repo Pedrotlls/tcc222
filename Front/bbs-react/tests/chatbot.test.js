@@ -143,6 +143,7 @@ test('perguntas da loja: pagamento, cupom, cancelamento, garantia',()=>{
   assert.match(ask('como uso um cupom?').texto,/Aplicar cupom/);
   assert.match(ask('quero cancelar meu pedido').texto,/RECEBIDO/);
   assert.match(ask('tem garantia?').texto,/acadêmico/);
+  assert.match(ask('tem algum brinde?').texto,/Moletom BBS/);
 });
 
 test('saudação, ajuda, agradecimento e mensagem desconhecida',()=>{
